@@ -1,0 +1,44 @@
+{
+  "extends": ["@commitlint/config-conventional"],
+  "parserPreset": {
+    "parserOpts": {
+      "headerPattern": "^(?<type>.+):\\s(?<subject>.+)$",
+      "headerCorrespondence": ["type", "subject"]
+    }
+  },
+  "rules": {
+    "subject-empty": [2, "never"],
+    "subject-full-stop": [2, "never", "."],
+    "subject-case": [0],
+    "type-empty": [2, "never"],
+    "type-case": [0],
+    "type-enum": [
+      2,
+      "always",
+      [
+        "✨ Feat",
+        ":sparkles: Feat",
+        "📦️ Chore",
+        ":package: Chore",
+        "💄 Design",
+        ":lipstick: Design",
+        "🐛 Fix",
+        ":bug: Fix",
+        "♻️ Refactor",
+        ":recycle: Refactor",
+        "🚚 Rename",
+        ":truck: Rename", 
+        "🔥 Remove",
+        ":fire: Remove",
+        "📚 Docs",
+        ":books: Docs",
+        "✅ Test",
+        ":white_check_mark: Test",
+        "🚀 Deploy",
+        ":rocket: Deploy",
+        "💚 CI",
+        ":green_heart: CI"
+      ]
+    ]
+  }
+}
