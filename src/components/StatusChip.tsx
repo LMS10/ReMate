@@ -1,5 +1,7 @@
 'use client';
 
+import { cn } from '../utils/cn';
+
 interface StatusChipProps {
   status: 'approval' | 'wait' | 'return';
   label: string;
@@ -20,9 +22,12 @@ export default function StatusChip({ status, label }: StatusChipProps) {
 
   return (
     <span
-      className={`flex h-[22px] w-[46px] items-center justify-center gap-[6px] rounded-[16px] text-xs leading-[18px] font-medium ${styles[status]} md:text-md md:h-[26px] md:w-[57px]`}
+      className={cn(
+        'md:text-md flex h-5.5 w-11.5 items-center justify-center gap-1.5 rounded-2xl text-xs leading-4.5 font-medium md:h-6.5 md:w-14.25',
+        styles[status],
+      )}
     >
-      <span className={`h-[4px] w-[4px] rounded-full md:h-[6px] md:w-[6px] ${dotColors[status]}`} />
+      <span className={cn('h-1 w-1 rounded-full md:h-1.5 md:w-1.5', dotColors[status])} />
       {label}
     </span>
   );
