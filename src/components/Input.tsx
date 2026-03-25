@@ -92,7 +92,12 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
         </div>
 
         {!isSearch && (
-          <p className={cn('text-error min-h-4.5 text-[12px] leading-4.5', !error && 'invisible')}>
+          <p
+            className={cn(
+              'text-error md:text-md min-h-4.5 text-[12px] leading-4.5',
+              !error && 'invisible',
+            )}
+          >
             {error || 'placeholder'}
           </p>
         )}

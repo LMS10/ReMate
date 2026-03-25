@@ -19,7 +19,7 @@ export default function OneColorChip({ color, selected, onSelect, variant }: One
       className={cn(
         'relative rounded-full',
         color,
-        variant === 'modal' && 'h-7.5 w-7.5',
+        variant === 'modal' && 'h-7.5 w-7.5 cursor-pointer',
         variant === 'sidebar' && 'h-2 w-2 cursor-default',
       )}
     >
