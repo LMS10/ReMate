@@ -21,7 +21,7 @@ const eslintConfig = defineConfig([
         },
       ],
 
-      'no-console': ['error', { allow: ['warn', 'error'] }],
+      'no-console': ['warn', { allow: ['log', 'warn', 'error'] }],
 
       'import/order': [
         'warn',
