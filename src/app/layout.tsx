@@ -1,5 +1,6 @@
 import localFont from 'next/font/local';
 import './globals.css';
+import ModalRoot from '@/components/modal/ModalRoot';
 
 const pretendard = localFont({
   src: '../fonts/PretendardVariable.woff2',
@@ -14,7 +15,11 @@ export default function RootLayout({
 }>) {
   return (
     <html lang='ko'>
-      <body className={pretendard.className}>{children}</body>
+      <body className={pretendard.className}>
+        {children}
+        <ModalRoot />
+        <div id='modal-root' />
+      </body>
     </html>
   );
 }
