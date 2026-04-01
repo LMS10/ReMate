@@ -5,6 +5,11 @@ body {
   margin: 0;
 }
 
+.dropdownScrollbar{
+  overflow-y: auto;
+  overflow-y: overlay;
+}
+
 .dropdownScrollbar::-webkit-scrollbar{
   width: 2px;
 }
@@ -12,6 +17,10 @@ body {
 .dropdownScrollbar::-webkit-scrollbar-thumb{
   background: #787486;
   border-radius: 40px;
+}
+
+.dropdownScrollbar::-webkit-scrollbar-track {
+  background: transparent;
 }
 
 .dropdownScrollbar::-webkit-scrollbar-button{
