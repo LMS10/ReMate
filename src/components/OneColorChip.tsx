@@ -5,12 +5,22 @@ import Icon from './Icon';
 
 interface OneColorChipProps {
   color: string;
-  selected: boolean;
+  selected?: boolean;
   onSelect?: () => void;
   variant: 'modal' | 'sidebar';
 }
 
+const colors: Record<string, string> = {
+  green: 'bg-chip-green',
+  purple: 'bg-chip-purple',
+  orange: 'bg-chip-orange',
+  blue: 'bg-chip-blue',
+  pink: 'bg-chip-pink',
+};
+
 export default function OneColorChip({ color, selected, onSelect, variant }: OneColorChipProps) {
+  const bgColor = colors[color];
+
   return (
     <button
       role='radio'
@@ -18,7 +28,7 @@ export default function OneColorChip({ color, selected, onSelect, variant }: One
       aria-checked={selected}
       className={cn(
         'relative rounded-full',
-        color,
+        bgColor,
         variant === 'modal' && 'h-7.5 w-7.5 cursor-pointer',
         variant === 'sidebar' && 'h-2 w-2 cursor-default',
       )}
