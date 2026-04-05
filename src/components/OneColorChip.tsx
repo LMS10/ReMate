@@ -11,11 +11,11 @@ interface OneColorChipProps {
 }
 
 const colors: Record<string, string> = {
-  green: 'bg-chip-green',
-  purple: 'bg-chip-purple',
-  orange: 'bg-chip-orange',
-  blue: 'bg-chip-blue',
-  pink: 'bg-chip-pink',
+  GREEN: 'bg-chip-green',
+  PURPLE: 'bg-chip-purple',
+  ORANGE: 'bg-chip-orange',
+  BLUE: 'bg-chip-blue',
+  PINK: 'bg-chip-pink',
 };
 
 export default function OneColorChip({ color, selected, onSelect, variant }: OneColorChipProps) {
