@@ -6,13 +6,7 @@ import OneColorChip from './OneColorChip';
 
 export default function ColorChips() {
   const [selected, setSelected] = useState<string | null>(null);
-  const colors = [
-    'bg-chip-green',
-    'bg-chip-purple',
-    'bg-chip-orange',
-    'bg-chip-blue',
-    'bg-chip-pink',
-  ];
+  const colors = ['green', 'purple', 'orange', 'blue', 'pink'];
 
   return (
     <div role='radiogroup' className={cn('flex gap-2')}>
