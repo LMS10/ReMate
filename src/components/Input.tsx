@@ -71,6 +71,7 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
                 variant,
                 hasError: Boolean(error),
               }),
+              isPassword && 'pr-12 md:pr-14',
               className,
             )}
             {...props}

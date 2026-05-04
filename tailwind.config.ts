@@ -29,7 +29,7 @@ export default {
           400: '#000000',
         },
         gray: {
-          100: '#FAFAFA',
+          100: '#F8FAFC',
           200: '#EEEEEE',
           300: '#D9D9D9',
           400: '#9FA6B2',
