@@ -7,7 +7,6 @@ export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
   const isAuthPage = pathname.startsWith('/login') || pathname.startsWith('/signup');
-
   const isProtectedPage = pathname.startsWith('/workspace') || pathname.startsWith('/mypage');
 
   if (isProtectedPage && !isLoggedIn) {
@@ -16,6 +15,29 @@ export async function middleware(req: NextRequest) {
 
   if (isAuthPage && isLoggedIn) {
     return NextResponse.redirect(new URL('/workspace', req.url));
+  }
+
+  const settingsMatch = pathname.match(/^\/workspace\/(\d+)\/settings/);
+  if (settingsMatch && token?.accessToken) {
+    const workspaceId = settingsMatch[1];
+    try {
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/api/v1/workspaces/${workspaceId}`,
+        {
+          headers: { Authorization: `Bearer ${token.accessToken}` },
+        },
+      );
+      if (res.ok) {
+        const data = await res.json();
+        if (data?.data?.role === 'MEMBER') {
+          return NextResponse.redirect(new URL(`/workspace/${workspaceId}`, req.url));
+        }
+      } else {
+        return NextResponse.redirect(new URL('/workspace', req.url));
+      }
+    } catch {
+      return NextResponse.redirect(new URL('/workspace', req.url));
+    }
   }
 
   return NextResponse.next();
