@@ -1,8 +1,13 @@
-import { mockWorkspaces } from '@/mocks/workspaces';
+'use client';
+
+import { useGetMyWorkspaces } from '@/apis/workspace/workspace.queries';
 import SidebarView from './SidebarView';
 
 export default function Sidebar() {
-  const { totalCount, data } = mockWorkspaces;
+  const { data, isLoading } = useGetMyWorkspaces();
 
-  return <SidebarView workspaces={data} totalCount={totalCount} />;
+  const workspaces = data?.data ?? [];
+  const totalCount = data?.totalCount ?? 0;
+
+  return <SidebarView workspaces={workspaces} totalCount={totalCount} isLoading={isLoading} />;
 }
