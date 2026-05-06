@@ -33,11 +33,9 @@ export default function Dropdown({
   const optionList = () => (
     <ul
       className={cn(
-        'dropdownScrollbar text-black-200 absolute mt-0.75 box-border truncate rounded-md border border-gray-300 px-0.75 md:mt-1 md:px-1',
+        'dropdownScrollbar text-black-200 absolute mt-0.75 box-border truncate rounded-md border border-gray-300 bg-white px-0.75 md:mt-1 md:px-1',
         options.length > 4 ? 'max-h-36.25 overflow-y-auto md:max-h-45.5' : 'h-auto',
-        variant === 'profile'
-          ? 'right-0 w-23.5 translate-x-7 md:left-0 md:w-27.5 md:translate-x-0'
-          : 'left-0 w-full',
+        variant === 'profile' ? 'left-1/2 w-23.5 -translate-x-1/2 md:w-27.5' : 'left-0 w-full',
       )}
     >
       {options.map((opt) => {
