@@ -1,11 +1,11 @@
 import Link from 'next/link';
+import type { WorkspaceItem } from '@/apis/workspace/workspace.type';
 import OneColorChip from '@/components/OneColorChip';
-import { Workspace } from '@/types/workspace';
 import { cn } from '@/utils/cn';
 import Icon from '../Icon';
 
 interface Props {
-  workspace: Workspace;
+  workspace: WorkspaceItem;
   isSelected?: boolean;
 }
 
