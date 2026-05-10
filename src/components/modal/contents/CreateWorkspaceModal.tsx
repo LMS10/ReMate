@@ -1,6 +1,9 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import { toast } from 'react-toastify';
+import { useRouter } from 'next/navigation';
+import { useCreateWorkspace } from '@/apis/workspace/workspace.queries';
 import Button from '@/components/Buttons';
 import ColorChips from '@/components/ColorChips';
 import Input from '@/components/Input';
@@ -11,23 +14,33 @@ type Props = {
 
 export default function CreateWorkspaceModal({ onClose }: Props) {
   const [name, setName] = useState('');
-  const [loading, setLoading] = useState(false);
+  const [color, setColor] = useState('GREEN');
   const inputRef = useRef<HTMLInputElement>(null);
+  const router = useRouter();
+
+  const { mutate: createWorkspace, isPending } = useCreateWorkspace();
 
   useEffect(() => {
     inputRef.current?.focus();
   }, []);
 
-  const handleSubmit = async () => {
+  const handleSubmit = () => {
     if (!name) return;
 
-    try {
-      setLoading(true);
-      console.log('생성:', name);
-      onClose();
-    } finally {
-      setLoading(false);
-    }
+    createWorkspace(
+      { name, color },
+      {
+        onSuccess: (data) => {
+          toast.success('워크스페이스가 생성되었습니다.');
+          onClose();
+          router.push(`/workspace/${data.data}`);
+        },
+        onError: () => {
+          toast.error('워크스페이스 생성에 실패했습니다.');
+          onClose();
+        },
+      },
+    );
   };
 
   return (
@@ -43,9 +56,9 @@ export default function CreateWorkspaceModal({ onClose }: Props) {
           value={name}
           onChange={(e) => setName(e.target.value)}
         />
-
-        <ColorChips />
+        <ColorChips selected={color} onSelect={setColor} />
       </div>
+
       <div className='flex gap-3'>
         <Button
           variant='secondary'
@@ -55,14 +68,13 @@ export default function CreateWorkspaceModal({ onClose }: Props) {
         >
           취소
         </Button>
-
         <Button
           variant='primary'
           size='lg'
           className='flex-1 md:h-12.5 md:text-lg'
           onClick={handleSubmit}
           disabled={!name}
-          loading={loading}
+          loading={isPending}
         >
           생성하기
         </Button>
