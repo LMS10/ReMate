@@ -15,9 +15,7 @@ interface SidebarViewProps {
 
 export default function SidebarView({ workspaces, totalCount, isLoading }: SidebarViewProps) {
   const params = useParams();
-
   const selectedWorkspaceId = params?.workspaceId ? Number(params.workspaceId) : undefined;
-
   const state: SidebarState = totalCount === 0 ? 'empty' : selectedWorkspaceId ? 'selected' : 'all';
 
   return (

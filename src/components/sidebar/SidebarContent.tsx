@@ -17,7 +17,7 @@ export default function SidebarContent({
 }: Props) {
   if (isLoading) {
     return (
-      <div className='flex-1 overflow-y-auto p-3.25 pt-0 lg:p-6 lg:pt-0'>
+      <div className='scrollbar-hide flex-1 overflow-y-auto p-3.25 pt-0 lg:p-6 lg:pt-0'>
         <SidebarSkeleton />
       </div>
     );
@@ -26,7 +26,7 @@ export default function SidebarContent({
   if (state === 'empty') return null;
 
   return (
-    <div className='flex-1 overflow-y-auto p-3.25 pt-0 lg:p-6 lg:pt-0'>
+    <div className='scrollbar-hide flex-1 overflow-y-auto p-3.25 pt-0 lg:p-6 lg:pt-0'>
       <WorkspaceList workspaces={workspaces} selectedWorkspaceId={selectedWorkspaceId} />
     </div>
   );
