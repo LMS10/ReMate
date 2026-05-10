@@ -46,3 +46,56 @@ export interface InviteWorkspaceResponse {
     traceId: string;
   };
 }
+
+export interface CreateWorkspaceRequest {
+  name: string;
+  color: string;
+}
+
+export interface CreateWorkspaceResponse {
+  success: boolean;
+  data: number;
+  meta: {
+    timestamp: string;
+    traceId: string;
+  };
+}
+
+export interface InvitationItem {
+  color: string;
+  membershipId: number;
+  role: WorkspaceRole;
+  workspaceId: number;
+  workspaceName: string;
+}
+
+export interface InvitationListResponse {
+  success: boolean;
+  totalCount: number;
+  nextCursor: number | null;
+  data: InvitationItem[];
+  meta: {
+    timestamp: string;
+    traceId: string;
+  };
+}
+
+export interface AcceptRejectInvitationResponse {
+  success: boolean;
+  data: null;
+  meta: {
+    timestamp: string;
+    traceId: string;
+  };
+}
+
+export interface AdminNameResponse {
+  success: boolean;
+  data: {
+    adminName: string;
+  };
+  meta: {
+    timestamp: string;
+    traceId: string;
+  };
+}
