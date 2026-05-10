@@ -14,7 +14,7 @@ export default function WorkspaceCard({ name, color, role }: WorkspaceCardProps)
   return (
     <div
       className={cn(
-        'flex h-14.5 cursor-pointer items-center justify-between rounded-lg border border-gray-300 px-5 md:h-17 lg:h-17.5',
+        'flex h-14.5 cursor-pointer items-center justify-between rounded-lg border border-gray-300 bg-white px-5 md:h-17 lg:h-17.5',
       )}
     >
       <div
