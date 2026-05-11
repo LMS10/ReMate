@@ -5,7 +5,6 @@ import { useParams } from 'next/navigation';
 import { useGetReceiptDetail } from '@/apis/receipt/receipt.queries';
 import { ReceiptUploadResponse } from '@/apis/receipt/receipt.type';
 import useMediaQuery from '@/hooks/useMediaQuery';
-import { ReceiptDetail, ReceiptUpload } from '@/mocks/receipts';
 import { cn } from '@/utils/cn';
 import Icon from './Icon';
 import ResultChip from './ResultChip';
@@ -50,7 +49,7 @@ function InfoItem({
 
 export default function ReceiptPayInfo({ editable = false, uploadData }: ReciptPayInfoProps) {
   const isLg = useMediaQuery('(min-width: 1024px)');
-  const params = useParams<{ receiptId: string }>();
+  const params = useParams<{ receiptId: string; workspaceId: string }>();
 
   const [editingField, setEditingField] = useState<Set<EditableField>>(new Set());
   const [tempValue, setTempValue] = useState<Record<EditableField, string>>({
@@ -59,11 +58,10 @@ export default function ReceiptPayInfo({ editable = false, uploadData }: ReciptP
     totalAmount: '',
   });
 
-  const mock = ReceiptUpload.data;
-  const detailmock = ReceiptDetail.data;
-
-  const detailQuery = useGetReceiptDetail(Number(params.receiptId), { enabled: !editable });
-  const data = editable ? (uploadData ?? mock) : (detailQuery.data?.data ?? detailmock);
+  const detailQuery = useGetReceiptDetail(Number(params.receiptId), Number(params.workspaceId), {
+    enabled: !editable,
+  });
+  const data = editable ? uploadData : detailQuery.data?.data;
 
   function handleEditClick(field: EditableField, currentValue: string) {
     setEditingField((prev) => {
@@ -82,15 +80,15 @@ export default function ReceiptPayInfo({ editable = false, uploadData }: ReciptP
 
   const formatAmount = (amount: number) => `₩${amount.toLocaleString('ko-KR')}`;
 
-  //   if (!editable && detailQuery.isLoading) {
-  //     return <div>로딩중...</div>;
-  //   }
-  //   if (!editable && detailQuery.isError) {
-  //     return <div>{detailQuery.error.message}</div>;
-  //   }
-  //   if (!data) {
-  //     return null;
-  //   }
+  if (!editable && detailQuery.isLoading) {
+    return <div>로딩중...</div>;
+  }
+  if (!editable && detailQuery.isError) {
+    return <div>{detailQuery.error.message}</div>;
+  }
+  if (!data) {
+    return null;
+  }
 
   return (
     <div className={cn('min-w-[236.5px] rounded-lg border border-gray-300 p-4 lg:max-w-100')}>
@@ -99,10 +97,10 @@ export default function ReceiptPayInfo({ editable = false, uploadData }: ReciptP
           <div className={cn('flex flex-col gap-4')}>
             <InfoItem label='게시자'>홍길동</InfoItem>
             <InfoItem label='AI 분석 결과'>
-              <ResultChip reasons={mock.inappropriateReasons} />
+              <ResultChip reasons={data.inappropriateReasons} />
             </InfoItem>
             <InfoItem label='상태'>
-              <StatusChip status={mock.status} />
+              <StatusChip status={data.status} />
             </InfoItem>
           </div>
           <div className={cn('flex min-w-0 flex-col gap-4')}>
@@ -110,7 +108,7 @@ export default function ReceiptPayInfo({ editable = false, uploadData }: ReciptP
               label='결제일'
               editable={editable}
               isEditing={editingField.has('tradeAt')}
-              onEditClick={() => handleEditClick('tradeAt', mock.tradeAt)}
+              onEditClick={() => handleEditClick('tradeAt', data.tradeAt)}
               className='h-6'
             >
               {editingField.has('tradeAt') ? (
@@ -123,14 +121,14 @@ export default function ReceiptPayInfo({ editable = false, uploadData }: ReciptP
                   )}
                 />
               ) : (
-                formatDate(mock.tradeAt)
+                formatDate(data.tradeAt)
               )}
             </InfoItem>
             <InfoItem
               label='가맹점'
               editable={editable}
               isEditing={editingField.has('storeName')}
-              onEditClick={() => handleEditClick('storeName', mock.storeName)}
+              onEditClick={() => handleEditClick('storeName', data.storeName)}
               className='h-6'
             >
               {editingField.has('storeName') ? (
@@ -143,14 +141,14 @@ export default function ReceiptPayInfo({ editable = false, uploadData }: ReciptP
                   )}
                 />
               ) : (
-                mock.storeName
+                data.storeName
               )}
             </InfoItem>
             <InfoItem
               label='결제 금액'
               editable={editable}
               isEditing={editingField.has('totalAmount')}
-              onEditClick={() => handleEditClick('totalAmount', String(mock.totalAmount))}
+              onEditClick={() => handleEditClick('totalAmount', String(data.totalAmount))}
               className='h-6'
             >
               {editingField.has('totalAmount') ? (
@@ -165,7 +163,7 @@ export default function ReceiptPayInfo({ editable = false, uploadData }: ReciptP
                   )}
                 />
               ) : (
-                formatAmount(mock.totalAmount)
+                formatAmount(data.totalAmount)
               )}
             </InfoItem>
           </div>
@@ -177,7 +175,7 @@ export default function ReceiptPayInfo({ editable = false, uploadData }: ReciptP
             label='결제일'
             editable={editable}
             isEditing={editingField.has('tradeAt')}
-            onEditClick={() => handleEditClick('tradeAt', mock.tradeAt)}
+            onEditClick={() => handleEditClick('tradeAt', data.tradeAt)}
             className='h-6'
           >
             {editingField.has('tradeAt') ? (
@@ -190,14 +188,14 @@ export default function ReceiptPayInfo({ editable = false, uploadData }: ReciptP
                 )}
               />
             ) : (
-              formatDate(mock.tradeAt)
+              formatDate(data.tradeAt)
             )}
           </InfoItem>
           <InfoItem
             label='가맹점'
             editable={editable}
             isEditing={editingField.has('storeName')}
-            onEditClick={() => handleEditClick('storeName', mock.storeName)}
+            onEditClick={() => handleEditClick('storeName', data.storeName)}
             className='h-6'
           >
             {editingField.has('storeName') ? (
@@ -210,14 +208,14 @@ export default function ReceiptPayInfo({ editable = false, uploadData }: ReciptP
                 )}
               />
             ) : (
-              mock.storeName
+              data.storeName
             )}
           </InfoItem>
           <InfoItem
             label='결제 금액'
             editable={editable}
             isEditing={editingField.has('totalAmount')}
-            onEditClick={() => handleEditClick('totalAmount', String(mock.totalAmount))}
+            onEditClick={() => handleEditClick('totalAmount', String(data.totalAmount))}
             className='h-6'
           >
             {editingField.has('totalAmount') ? (
@@ -230,14 +228,14 @@ export default function ReceiptPayInfo({ editable = false, uploadData }: ReciptP
                 )}
               />
             ) : (
-              formatAmount(mock.totalAmount)
+              formatAmount(data.totalAmount)
             )}
           </InfoItem>
           <InfoItem label='AI 분석 결과'>
-            <ResultChip reasons={mock.inappropriateReasons} />
+            <ResultChip reasons={data.inappropriateReasons} />
           </InfoItem>
           <InfoItem label='상태'>
-            <StatusChip status={mock.status} />
+            <StatusChip status={data.status} />
           </InfoItem>
         </div>
       )}
