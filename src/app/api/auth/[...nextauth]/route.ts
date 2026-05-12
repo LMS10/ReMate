@@ -25,6 +25,7 @@ export const authOptions: NextAuthOptions = {
             id: String(user.userId),
             email: user.email,
             name: user.name,
+            picture: null,
             accessToken: user.accessToken,
           };
         } catch {
@@ -39,12 +40,14 @@ export const authOptions: NextAuthOptions = {
       if (user) {
         token.accessToken = user.accessToken;
         token.userId = user.id;
+        token.picture = null;
       }
       return token;
     },
     async session({ session, token }) {
       session.accessToken = token.accessToken;
       session.user.id = token.userId;
+      session.user.picture = (token.picture as string | null) ?? null;
       return session;
     },
   },
