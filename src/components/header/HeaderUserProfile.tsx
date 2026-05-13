@@ -37,7 +37,6 @@ export default function HeaderUserProfile({ name, picture }: HeaderUserProfilePr
   }, []);
 
   const handleSelect = async (value: string) => {
-    setOpen(false);
     if (value === '마이페이지') {
       router.push('/mypage');
     } else if (value === '로그아웃') {

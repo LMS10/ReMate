@@ -44,8 +44,8 @@ export default function Dropdown({
           <li
             key={opt}
             onClick={() => {
-              onSelect(opt);
               setOpen!(false);
+              onSelect(opt);
             }}
             className={cn(
               'mt-0.75 box-border flex cursor-pointer items-center justify-center truncate rounded-md text-sm leading-6.5 last:mb-0.75 md:mt-1 md:text-lg md:last:mb-1',

@@ -21,6 +21,7 @@ function useWorkspaceId(): number | null {
 }
 
 function LandingHeader() {
+  const pathname = usePathname();
   const { data: meData, isLoading } = useGetMe();
   const user = meData?.data;
 
@@ -47,7 +48,7 @@ function LandingHeader() {
       {isLoading ? (
         <HeaderSkeleton />
       ) : user ? (
-        <HeaderUserProfile name={user.name} picture={user.picture} />
+        <HeaderUserProfile key={pathname} name={user.name} picture={user.picture} />
       ) : (
         <div className='text-md flex items-center gap-4 text-gray-500 md:gap-8 md:text-lg'>
           <Link href='/login' className='hover:text-black-200 transition-all duration-200'>
@@ -63,6 +64,7 @@ function LandingHeader() {
 }
 
 function WorkspaceDetailHeader() {
+  const pathname = usePathname();
   const router = useRouter();
   const workspaceId = useWorkspaceId();
   const { data: wsData, isLoading: wsLoading } = useGetWorkspace(workspaceId ?? 0);
@@ -117,7 +119,7 @@ function WorkspaceDetailHeader() {
         {meLoading ? (
           <HeaderSkeleton />
         ) : (
-          user && <HeaderUserProfile name={user.name} picture={user.picture} />
+          user && <HeaderUserProfile key={pathname} name={user.name} picture={user.picture} />
         )}
       </div>
     </div>
@@ -125,6 +127,7 @@ function WorkspaceDetailHeader() {
 }
 
 function WorkspaceListHeader() {
+  const pathname = usePathname();
   const { data: meData, isLoading } = useGetMe();
   const user = meData?.data;
 
@@ -137,7 +140,7 @@ function WorkspaceListHeader() {
         {isLoading ? (
           <HeaderSkeleton />
         ) : (
-          user && <HeaderUserProfile name={user.name} picture={user.picture} />
+          user && <HeaderUserProfile key={pathname} name={user.name} picture={user.picture} />
         )}
       </div>
     </div>
@@ -162,7 +165,7 @@ export default function Header() {
   return (
     <header
       className={cn(
-        'fixed top-0 right-0 h-15 border-b border-gray-300 bg-white md:h-17.5',
+        'fixed top-0 right-0 z-10 h-15 border-b border-gray-300 bg-white md:h-17.5',
         isLanding
           ? 'left-0 pr-4 pl-[23.5px] md:pr-15 md:pl-6'
           : 'left-16.75 pr-4 pl-6 md:left-40 md:pr-7 md:pl-10 lg:left-75 lg:pr-12',

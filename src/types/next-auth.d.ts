@@ -8,6 +8,7 @@ declare module 'next-auth' {
       id: string;
       email: string;
       name: string;
+      picture: string | null;
     };
   }
 
@@ -16,6 +17,7 @@ declare module 'next-auth' {
     email: string;
     name: string;
     accessToken: string;
+    picture: string | null;
   }
 }
 
