@@ -8,6 +8,8 @@ import {
   InvitationListResponse,
   AcceptRejectInvitationResponse,
   AdminNameResponse,
+  WorkspaceMembersResponse,
+  WorkspaceMemberStatus,
 } from './workspace.type';
 
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL;
@@ -113,6 +115,22 @@ export const workspaceService = {
     });
 
     if (!res.ok) throw new Error('어드민 이름 조회 실패');
+    return res.json();
+  },
+
+  getWorkspaceMembers: async (
+    workspaceId: number,
+    status: WorkspaceMemberStatus,
+    accessToken: string,
+  ): Promise<WorkspaceMembersResponse> => {
+    const res = await fetch(
+      `${BASE_URL}/api/v1/workspaces/${workspaceId}/members?status=${status}`,
+      {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      },
+    );
+
+    if (!res.ok) throw new Error('멤버 목록 조회에 실패했습니다.');
     return res.json();
   },
 };
