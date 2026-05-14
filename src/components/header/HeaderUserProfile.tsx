@@ -56,7 +56,7 @@ export default function HeaderUserProfile({ name, picture }: HeaderUserProfilePr
           <Image src={imageUrl} alt={name} fill className='object-cover' />
         </div>
       ) : (
-        <div className='md:text-md rounded-ful flex h-7 w-7 shrink-0 items-center justify-center bg-blue-100 text-sm font-semibold text-blue-200 md:h-8 md:w-8'>
+        <div className='md:text-md flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-blue-100 text-sm font-semibold text-blue-200 md:h-8 md:w-8'>
           {initial}
         </div>
       )}
