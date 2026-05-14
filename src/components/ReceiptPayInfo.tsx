@@ -2,10 +2,12 @@
 
 import { useState } from 'react';
 import { useParams } from 'next/navigation';
+import { useGetMe } from '@/apis/auth/auth.queries';
 import { useGetReceiptDetail } from '@/apis/receipt/receipt.queries';
 import { ReceiptUploadResponse } from '@/apis/receipt/receipt.type';
 import useMediaQuery from '@/hooks/useMediaQuery';
 import { cn } from '@/utils/cn';
+import Avatar from './Avatar';
 import Icon from './Icon';
 import ResultChip from './ResultChip';
 import StatusChip from './StatusChip';
@@ -63,6 +65,8 @@ export default function ReceiptPayInfo({ editable = false, uploadData }: ReciptP
   });
   const data = editable ? uploadData : detailQuery.data?.data;
 
+  const { data: meData } = useGetMe();
+
   function handleEditClick(field: EditableField, currentValue: string) {
     setEditingField((prev) => {
       const keepEditing = new Set(prev);
@@ -95,7 +99,9 @@ export default function ReceiptPayInfo({ editable = false, uploadData }: ReciptP
       {isLg ? (
         <div className={cn('grid grid-cols-2')}>
           <div className={cn('flex flex-col gap-4')}>
-            <InfoItem label='게시자'>홍길동</InfoItem>
+            <InfoItem label='게시자'>
+              <Avatar name={meData?.data.name ?? ''} picture={meData?.data?.picture ?? null} />
+            </InfoItem>
             <InfoItem label='AI 분석 결과'>
               <ResultChip reasons={data.inappropriateReasons} />
             </InfoItem>
@@ -103,7 +109,7 @@ export default function ReceiptPayInfo({ editable = false, uploadData }: ReciptP
               <StatusChip status={data.status} />
             </InfoItem>
           </div>
-          <div className={cn('flex min-w-0 flex-col gap-4')}>
+          <div className={cn('text-md flex min-w-0 flex-col gap-4')}>
             <InfoItem
               label='결제일'
               editable={editable}
@@ -169,8 +175,10 @@ export default function ReceiptPayInfo({ editable = false, uploadData }: ReciptP
           </div>
         </div>
       ) : (
-        <div className={cn('flex min-w-0 flex-col gap-4')}>
-          <InfoItem label='게시자'>홍길동</InfoItem>
+        <div className={cn('text-md flex min-w-0 flex-col gap-4')}>
+          <InfoItem label='게시자'>
+            <Avatar name={meData?.data.name ?? ''} picture={meData?.data?.picture ?? null} />
+          </InfoItem>
           <InfoItem
             label='결제일'
             editable={editable}
