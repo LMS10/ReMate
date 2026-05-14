@@ -1,7 +1,11 @@
 import { useMutation, useQuery, useQueryClient, keepPreviousData } from '@tanstack/react-query';
 import { useSession } from 'next-auth/react';
 import { workspaceService } from './workspace.service';
-import { CreateWorkspaceRequest, InviteWorkspaceRequest } from './workspace.type';
+import {
+  CreateWorkspaceRequest,
+  InviteWorkspaceRequest,
+  WorkspaceMemberStatus,
+} from './workspace.type';
 
 export const workspaceKeys = {
   all: ['workspaces'] as const,
@@ -9,6 +13,8 @@ export const workspaceKeys = {
   detail: (workspaceId: number) => ['workspaces', workspaceId] as const,
   invitations: ['workspaces', 'invitations'] as const,
   adminName: (workspaceId: number) => ['workspaces', workspaceId, 'admin-name'] as const,
+  members: (workspaceId: number, status: WorkspaceMemberStatus) =>
+    ['workspaces', workspaceId, 'members', status] as const,
 };
 
 export const useGetMyWorkspaces = () => {
@@ -114,5 +120,17 @@ export const useRejectInvitation = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: workspaceKeys.invitations });
     },
+  });
+};
+
+export const useGetWorkspaceMembers = (workspaceId: number, status: WorkspaceMemberStatus) => {
+  const { data: session } = useSession();
+  const accessToken = session?.accessToken as string | undefined;
+
+  return useQuery({
+    queryKey: workspaceKeys.members(workspaceId, status),
+    queryFn: () => workspaceService.getWorkspaceMembers(workspaceId, status, accessToken!),
+    enabled: !!accessToken && !!workspaceId,
+    staleTime: 1000 * 60 * 5,
   });
 };

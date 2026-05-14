@@ -160,7 +160,7 @@ export default function Page() {
     <div className='mb-12 w-full max-w-3xl p-3 md:p-5'>
       <button
         onClick={() => router.back()}
-        className='text-md mb-3 flex cursor-pointer items-center gap-2 font-medium text-gray-500 md:mb-5 md:text-lg'
+        className='text-md mb-3 flex cursor-pointer items-center gap-2 font-medium text-gray-400 transition-all duration-200 hover:text-gray-500 md:mb-5 md:text-lg'
       >
         <Icon name='arrowLeft' size={16} className='md:h-4.5 md:w-4.5' />
         돌아가기

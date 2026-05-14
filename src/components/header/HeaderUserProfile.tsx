@@ -63,7 +63,7 @@ export default function HeaderUserProfile({ name, picture }: HeaderUserProfilePr
       </span>
 
       {open && (
-        <div className='absolute top-4 left-1/2 -translate-x-7 md:top-5 md:-translate-x-1.5'>
+        <div className='absolute top-8 left-1/2 -translate-x-7 md:top-9 md:-translate-x-1.5'>
           <Dropdown
             variant='profile'
             options={PROFILE_OPTIONS}

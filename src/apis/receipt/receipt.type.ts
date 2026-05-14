@@ -68,3 +68,59 @@ export interface ReceiptDetailResponse {
     traceId: string;
   };
 }
+
+export interface ReceiptStatsResponse {
+  success: boolean;
+  data: {
+    totalAmount: number;
+    pendingCount: number;
+    rejectedCount: number;
+    totalCount: number;
+    approvedCount: number;
+  };
+  meta: {
+    timestamp: string;
+    traceId: string;
+  };
+}
+
+export interface ReceiptListItem {
+  id: number;
+  storeName: string;
+  totalAmount: number;
+  tradeAt: string;
+  status: ReceiptStatus;
+  userName: string;
+  userId: number;
+  tags: ReceiptTag[];
+  rejectionReason: string | null;
+  tax: number;
+  confidence: number;
+  createdAt: string;
+  inappropriateReasons: string[];
+  discountAmount: number;
+  aiReason: string;
+  category: string;
+}
+
+export interface ReceiptListResponse {
+  success: boolean;
+  totalCount: number;
+  totalPages: number;
+  currentPage: number;
+  data: ReceiptListItem[];
+  meta: {
+    timestamp: string;
+    traceId: string;
+  };
+}
+
+export interface ReceiptListParams {
+  workspaceId: number;
+  storeName?: string;
+  userId?: number;
+  status?: 'WAITING' | 'APPROVED' | 'REJECTED';
+  sort?: 'LATEST' | 'OLDEST';
+  page?: number;
+  size?: number;
+}

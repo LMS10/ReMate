@@ -99,3 +99,25 @@ export interface AdminNameResponse {
     traceId: string;
   };
 }
+
+export type WorkspaceMemberStatus = 'ACCEPTED' | 'PENDING';
+
+export interface WorkspaceMember {
+  userId: number;
+  name: string;
+  email: string;
+  picture: string | null;
+  role: 'ADMIN' | 'MEMBER';
+}
+
+export interface WorkspaceMembersResponse {
+  success: boolean;
+  totalCount: number;
+  totalPages: number;
+  currentPage: number;
+  data: WorkspaceMember[];
+  meta: {
+    timestamp: string;
+    traceId: string;
+  };
+}
