@@ -5,7 +5,6 @@ import { signOut } from 'next-auth/react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import Dropdown from '@/components/Dropdown';
-import Icon from '@/components/Icon';
 
 interface HeaderUserProfileProps {
   name: string;
@@ -25,6 +24,8 @@ export default function HeaderUserProfile({ name, picture }: HeaderUserProfilePr
       ? picture
       : `${BASE_URL}${picture}`
     : null;
+
+  const initial = name.charAt(0);
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -51,11 +52,13 @@ export default function HeaderUserProfile({ name, picture }: HeaderUserProfilePr
       onClick={() => setOpen((prev) => !prev)}
     >
       {imageUrl ? (
-        <div className='relative h-7 w-7 shrink-0 overflow-hidden rounded-full border border-gray-300 md:h-8 md:w-8'>
+        <div className='relative h-7 w-7 shrink-0 overflow-hidden rounded-full md:h-8 md:w-8'>
           <Image src={imageUrl} alt={name} fill className='object-cover' />
         </div>
       ) : (
-        <Icon name='profile' size={28} className='md:h-8 md:w-8' />
+        <div className='md:text-md flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-blue-100 text-sm font-semibold text-blue-200 md:h-8 md:w-8'>
+          {initial}
+        </div>
       )}
 
       <span className='text-black-200 hidden w-20 truncate text-lg font-medium md:block md:text-base'>

@@ -10,6 +10,10 @@ import {
   AdminNameResponse,
   WorkspaceMembersResponse,
   WorkspaceMemberStatus,
+  UpdateWorkspaceSettingsRequest,
+  UpdateWorkspaceSettingsResponse,
+  DeleteWorkspaceMemberResponse,
+  DeleteWorkspaceResponse,
 } from './workspace.type';
 
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL;
@@ -131,6 +135,57 @@ export const workspaceService = {
     );
 
     if (!res.ok) throw new Error('멤버 목록 조회에 실패했습니다.');
+    return res.json();
+  },
+
+  updateWorkspaceSettings: async (
+    workspaceId: number,
+    body: UpdateWorkspaceSettingsRequest,
+    accessToken: string,
+  ): Promise<UpdateWorkspaceSettingsResponse> => {
+    const res = await fetch(`${BASE_URL}/api/v1/workspaces/${workspaceId}/settings`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${accessToken}`,
+      },
+      body: JSON.stringify(body),
+    });
+
+    if (res.status === 403) throw new Error('수정 권한이 없습니다.');
+    if (res.status === 404) throw new Error('워크스페이스를 찾을 수 없습니다.');
+    if (!res.ok) throw new Error('워크스페이스 설정 수정에 실패했습니다.');
+    return res.json();
+  },
+
+  deleteWorkspaceMember: async (
+    workspaceId: number,
+    userId: number,
+    accessToken: string,
+  ): Promise<DeleteWorkspaceMemberResponse> => {
+    const res = await fetch(`${BASE_URL}/api/v1/workspaces/${workspaceId}/members/${userId}`, {
+      method: 'DELETE',
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
+
+    if (res.status === 403) throw new Error('강퇴 권한이 없습니다.');
+    if (res.status === 404) throw new Error('멤버를 찾을 수 없습니다.');
+    if (!res.ok) throw new Error('멤버 강퇴에 실패했습니다.');
+    return res.json();
+  },
+
+  deleteWorkspace: async (
+    workspaceId: number,
+    accessToken: string,
+  ): Promise<DeleteWorkspaceResponse> => {
+    const res = await fetch(`${BASE_URL}/api/v1/workspaces/${workspaceId}`, {
+      method: 'DELETE',
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
+
+    if (res.status === 403) throw new Error('삭제 권한이 없습니다.');
+    if (res.status === 404) throw new Error('워크스페이스를 찾을 수 없습니다.');
+    if (!res.ok) throw new Error('워크스페이스 삭제에 실패했습니다.');
     return res.json();
   },
 };

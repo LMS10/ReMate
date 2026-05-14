@@ -121,3 +121,35 @@ export interface WorkspaceMembersResponse {
     traceId: string;
   };
 }
+
+export interface UpdateWorkspaceSettingsRequest {
+  name: string;
+  color: string;
+}
+
+export interface UpdateWorkspaceSettingsResponse {
+  success: boolean;
+  data: null;
+  meta: {
+    timestamp: string;
+    traceId: string;
+  };
+}
+
+export interface DeleteWorkspaceMemberResponse {
+  success: boolean;
+  data: null;
+  meta: {
+    timestamp: string;
+    traceId: string;
+  };
+}
+
+export interface DeleteWorkspaceResponse {
+  success: boolean;
+  data: null;
+  meta: {
+    timestamp: string;
+    traceId: string;
+  };
+}

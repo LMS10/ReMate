@@ -4,6 +4,7 @@ import { workspaceService } from './workspace.service';
 import {
   CreateWorkspaceRequest,
   InviteWorkspaceRequest,
+  UpdateWorkspaceSettingsRequest,
   WorkspaceMemberStatus,
 } from './workspace.type';
 
@@ -66,6 +67,18 @@ export const useGetAdminName = (workspaceId: number) => {
   });
 };
 
+export const useGetWorkspaceMembers = (workspaceId: number, status: WorkspaceMemberStatus) => {
+  const { data: session } = useSession();
+  const accessToken = session?.accessToken as string | undefined;
+
+  return useQuery({
+    queryKey: workspaceKeys.members(workspaceId, status),
+    queryFn: () => workspaceService.getWorkspaceMembers(workspaceId, status, accessToken!),
+    enabled: !!accessToken && !!workspaceId,
+    staleTime: 1000 * 60 * 5,
+  });
+};
+
 export const useCreateWorkspace = () => {
   const { data: session } = useSession();
   const accessToken = session?.accessToken as string | undefined;
@@ -123,14 +136,41 @@ export const useRejectInvitation = () => {
   });
 };
 
-export const useGetWorkspaceMembers = (workspaceId: number, status: WorkspaceMemberStatus) => {
+export const useUpdateWorkspaceSettings = (workspaceId: number) => {
+  const { data: session } = useSession();
+  const accessToken = session?.accessToken as string | undefined;
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (body: UpdateWorkspaceSettingsRequest) =>
+      workspaceService.updateWorkspaceSettings(workspaceId, body, accessToken!),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: workspaceKeys.detail(workspaceId) });
+      queryClient.invalidateQueries({ queryKey: workspaceKeys.my });
+    },
+  });
+};
+
+export const useDeleteWorkspaceMember = (workspaceId: number) => {
   const { data: session } = useSession();
   const accessToken = session?.accessToken as string | undefined;
 
-  return useQuery({
-    queryKey: workspaceKeys.members(workspaceId, status),
-    queryFn: () => workspaceService.getWorkspaceMembers(workspaceId, status, accessToken!),
-    enabled: !!accessToken && !!workspaceId,
-    staleTime: 1000 * 60 * 5,
+  return useMutation({
+    mutationFn: (userId: number) =>
+      workspaceService.deleteWorkspaceMember(workspaceId, userId, accessToken!),
+  });
+};
+
+export const useDeleteWorkspace = () => {
+  const { data: session } = useSession();
+  const accessToken = session?.accessToken as string | undefined;
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (workspaceId: number) =>
+      workspaceService.deleteWorkspace(workspaceId, accessToken!),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: workspaceKeys.my });
+    },
   });
 };
