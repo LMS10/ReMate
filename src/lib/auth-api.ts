@@ -42,3 +42,41 @@ export async function signinApi(body: SigninRequest): Promise<AuthResponse> {
 
   return data;
 }
+
+export interface SocialLoginRequest {
+  state: string;
+  redirectUri: string;
+  token: string;
+}
+
+export interface SocialAuthResponse {
+  success: boolean;
+  data: {
+    accessToken: string;
+    user: {
+      id: number;
+      email: string;
+      nickname: string;
+      image: string | null;
+    };
+  };
+}
+
+export async function socialLoginApi(
+  provider: 'google' | 'kakao',
+  body: SocialLoginRequest,
+): Promise<SocialAuthResponse> {
+  const res = await fetch(`${API_URL}/api/v1/auth/social/login/${provider}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+
+  const data: SocialAuthResponse = await res.json();
+
+  if (!res.ok || !data.success) {
+    throw new ApiError(res.status, '소셜 로그인에 실패했습니다.');
+  }
+
+  return data;
+}
