@@ -1,12 +1,12 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { Suspense, useEffect, useRef } from 'react';
 import { signIn } from 'next-auth/react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Icon from '@/components/Icon';
 import { socialLoginApi } from '@/lib/auth-api';
 
-export default function KakaoCallbackPage() {
+function KakaoCallbackInner() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const called = useRef(false);
@@ -69,5 +69,13 @@ export default function KakaoCallbackPage() {
         <p className='text-center text-gray-400'>Kakao 로그인 중</p>
       </div>
     </div>
+  );
+}
+
+export default function KakaoCallbackPage() {
+  return (
+    <Suspense>
+      <KakaoCallbackInner />
+    </Suspense>
   );
 }
