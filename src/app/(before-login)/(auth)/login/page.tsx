@@ -20,6 +20,39 @@ interface LoginErrors {
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
+function generateState() {
+  return Math.random().toString(36).substring(2);
+}
+
+function handleGoogleLogin() {
+  const state = generateState();
+  sessionStorage.setItem('oauth_state', state);
+
+  const params = new URLSearchParams({
+    client_id: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID!,
+    redirect_uri: process.env.NEXT_PUBLIC_GOOGLE_REDIRECT_URI!,
+    response_type: 'code',
+    scope: 'openid email profile',
+    state,
+  });
+
+  window.location.href = `https://accounts.google.com/o/oauth2/v2/auth?${params}`;
+}
+
+function handleKakaoLogin() {
+  const state = generateState();
+  sessionStorage.setItem('oauth_state', state);
+
+  const params = new URLSearchParams({
+    client_id: process.env.NEXT_PUBLIC_KAKAO_REST_API_KEY!,
+    redirect_uri: process.env.NEXT_PUBLIC_KAKAO_REDIRECT_URI!,
+    response_type: 'code',
+    state,
+  });
+
+  window.location.href = `https://kauth.kakao.com/oauth/authorize?${params}`;
+}
+
 export default function Page() {
   const [form, setForm] = useState<LoginForm>({ email: '', password: '' });
   const [errors, setErrors] = useState<LoginErrors>({});
@@ -131,7 +164,7 @@ export default function Page() {
           <Button
             className='text-black-200 w-full border border-gray-300 bg-white font-medium md:h-12.5 md:text-lg'
             variant='secondary'
-            onClick={() => signIn('google', { callbackUrl: '/workspace' })}
+            onClick={handleGoogleLogin}
           >
             <Icon name='google' className='h-5 w-5 md:h-6 md:w-6' />
             Google로 시작하기
@@ -139,7 +172,7 @@ export default function Page() {
           <Button
             className='text-black-200 w-full border border-gray-300 bg-white font-medium md:h-12.5 md:text-lg'
             variant='secondary'
-            onClick={() => signIn('kakao', { callbackUrl: '/workspace' })}
+            onClick={handleKakaoLogin}
           >
             <Icon name='kakao' className='h-5 w-5 md:h-6 md:w-6' />
             Kakao로 시작하기
