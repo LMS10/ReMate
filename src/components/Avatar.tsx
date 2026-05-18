@@ -27,8 +27,19 @@ export default function Avatar({ name, picture, member = false, className }: Ava
   return (
     <div className={cn('flex max-w-42.5 items-center gap-2', className)}>
       {imageUrl ? (
-        <div className={cn('relative shrink-0 overflow-hidden rounded-full', sizeClass)}>
-          <Image src={imageUrl} alt={name} sizes='30px' fill className='object-cover' />
+        <div
+          className={cn(
+            'relative shrink-0 overflow-hidden rounded-full',
+            member ? 'h-8.5 w-8.5 md:h-9.5 md:w-9.5' : 'h-7.5 w-7.5',
+          )}
+        >
+          <Image
+            src={imageUrl}
+            alt={name}
+            sizes={member ? '100px' : '80px'}
+            fill
+            className='object-cover'
+          />
         </div>
       ) : (
         <div

@@ -109,4 +109,26 @@ export const receiptService = {
 
     window.URL.revokeObjectURL(blobUrl);
   },
+
+  updateStatus: async (
+    id: number,
+    workspaceId: number,
+    status: 'APPROVED' | 'REJECTED',
+    accessToken: string,
+    reason?: string,
+  ) => {
+    const updateParams = new URLSearchParams({ workspaceId: String(workspaceId), status });
+
+    if (reason) {
+      updateParams.append('reason', reason);
+    }
+
+    const res = await fetch(`${API_URL}/api/v1/receipts/${id}/status?${updateParams}`, {
+      method: 'PATCH',
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
+
+    if (!res.ok) throw new Error('상태 변경에 실패했습니다.');
+    return res.json();
+  },
 };

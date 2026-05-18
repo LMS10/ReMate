@@ -1,4 +1,4 @@
-import { keepPreviousData, useMutation, useQuery } from '@tanstack/react-query';
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useSession } from 'next-auth/react';
 import { receiptService } from './receipt.service';
 import { ReceiptListParams } from './receipt.type';
@@ -70,5 +70,27 @@ export const useExportReceipts = () => {
 
   return useMutation({
     mutationFn: (workspaceId: number) => receiptService.exportReceipts(workspaceId, accessToken!),
+  });
+};
+
+export const useUpdateStatus = () => {
+  const { data: session } = useSession();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({
+      id,
+      workspaceId,
+      status,
+      reason,
+    }: {
+      id: number;
+      workspaceId: number;
+      status: 'APPROVED' | 'REJECTED';
+      reason?: string;
+    }) => receiptService.updateStatus(id, workspaceId, status, session?.accessToken ?? '', reason),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['receipts'] });
+    },
   });
 };
