@@ -168,9 +168,9 @@ export const workspaceService = {
       headers: { Authorization: `Bearer ${accessToken}` },
     });
 
-    if (res.status === 403) throw new Error('강퇴 권한이 없습니다.');
+    if (res.status === 403) throw new Error('삭제 권한이 없습니다.');
     if (res.status === 404) throw new Error('멤버를 찾을 수 없습니다.');
-    if (!res.ok) throw new Error('멤버 강퇴에 실패했습니다.');
+    if (!res.ok) throw new Error('멤버 삭제에 실패했습니다.');
     return res.json();
   },
 

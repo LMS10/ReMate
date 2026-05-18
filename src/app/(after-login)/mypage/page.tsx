@@ -178,17 +178,22 @@ export default function Page() {
               className='hidden'
               onChange={handleFileChange}
             />
+
             <div
-              className='group relative h-24 w-24 cursor-pointer rounded-full border border-gray-300 bg-gray-100 md:h-28 md:w-28'
+              className='group relative h-24 w-24 cursor-pointer rounded-full md:h-28 md:w-28'
               onClick={() => fileInputRef.current?.click()}
             >
-              {previewUrl && (
+              {previewUrl ? (
                 <Image
                   src={previewUrl}
                   alt='프로필 이미지'
                   fill
                   className='rounded-full object-cover'
                 />
+              ) : (
+                <div className='flex h-full w-full items-center justify-center rounded-full bg-blue-100 text-4xl font-medium text-blue-200 md:text-5xl'>
+                  {user?.name?.charAt(0) ?? ''}
+                </div>
               )}
               <div className='absolute inset-0 hidden items-center justify-center rounded-full bg-black/30 group-hover:flex'>
                 <Icon name='plus' size={28} className='text-white' />

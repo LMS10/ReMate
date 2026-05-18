@@ -77,11 +77,11 @@ export default function Page() {
       deleteMember(member.userId, {
         onSuccess: () => {
           setKickedIds((prev) => [...prev, member.userId]);
-          toast.success(`${member.name}님을 강퇴했습니다.`);
+          toast.success(`${member.name}님을 삭제했습니다.`);
           resolve();
         },
         onError: (error: Error) => {
-          toast.error(error.message || '멤버 강퇴에 실패했습니다.');
+          toast.error(error.message || '멤버 삭제에 실패했습니다.');
           reject(error);
         },
       });

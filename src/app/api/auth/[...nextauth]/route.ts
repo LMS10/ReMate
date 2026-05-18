@@ -5,6 +5,7 @@ import { signinApi } from '@/lib/auth-api';
 export const authOptions: NextAuthOptions = {
   providers: [
     CredentialsProvider({
+      id: 'credentials',
       name: 'Credentials',
       credentials: {
         email: { label: 'Email', type: 'email' },
@@ -33,6 +34,29 @@ export const authOptions: NextAuthOptions = {
         }
       },
     }),
+
+    CredentialsProvider({
+      id: 'social',
+      name: 'Social',
+      credentials: {
+        accessToken: { label: 'Access Token', type: 'text' },
+        userId: { label: 'User ID', type: 'text' },
+        email: { label: 'Email', type: 'text' },
+        name: { label: 'Name', type: 'text' },
+        picture: { label: 'Picture', type: 'text' },
+      },
+      async authorize(credentials) {
+        if (!credentials?.accessToken) return null;
+
+        return {
+          id: credentials.userId ?? '',
+          email: credentials.email ?? '',
+          name: credentials.name ?? '',
+          picture: credentials.picture ?? null,
+          accessToken: credentials.accessToken,
+        };
+      },
+    }),
   ],
 
   callbacks: {
@@ -40,7 +64,7 @@ export const authOptions: NextAuthOptions = {
       if (user) {
         token.accessToken = user.accessToken;
         token.userId = user.id;
-        token.picture = null;
+        token.picture = user.picture ?? null;
       }
       return token;
     },
