@@ -62,6 +62,7 @@ export interface ReceiptDetailResponse {
     discountAmount: number;
     aiReason: string;
     category: string;
+    userPicture: string;
   };
   meta: {
     timestamp: string;
