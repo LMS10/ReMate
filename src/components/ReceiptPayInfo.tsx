@@ -1,6 +1,11 @@
 'use client';
 
 import { useState } from 'react';
+import { forwardRef, useImperativeHandle } from 'react';
+import { ko } from 'date-fns/locale';
+import DatePicker from 'react-datepicker';
+import { registerLocale } from 'react-datepicker';
+import { toast } from 'react-toastify';
 import { useParams } from 'next/navigation';
 import { useGetMe } from '@/apis/auth/auth.queries';
 import { useGetReceiptDetail, useUpdateStatus } from '@/apis/receipt/receipt.queries';
@@ -15,8 +20,10 @@ import ConfirmModal from './modal/contents/ConfirmModal';
 import Modal from './modal/Modal';
 import ResultChip from './ResultChip';
 import StatusChip from './StatusChip';
+import 'react-datepicker/dist/react-datepicker.css';
+registerLocale('ko', ko);
 
-interface ReciptPayInfoProps {
+interface ReceiptPayInfoProps {
   editable?: boolean;
   uploadData?: ReceiptUploadResponse['data'];
 }
@@ -41,210 +48,359 @@ function InfoItem({
   onEditClick?: () => void;
 }) {
   return (
-    <div className={cn('flex flex-col gap-1.5')}>
-      <div className={cn('flex gap-35.5 lg:gap-29')}>
+    <div className={cn('flex flex-col gap-1.5', className)}>
+      <div className={cn('flex items-center justify-between')}>
         <p className={cn('text-black-400 text-xs font-semibold')}>{label}</p>
         {action}
       </div>
-      <div className={cn('flex gap-0.5')}>
-        <div className='h-7.5'>{children}</div>
-        <div>
-          {editable === true && (
-            <Icon name='edit' size={28} className='cursor-pointer' onClick={onEditClick} />
-          )}
-        </div>
+      <div className='flex min-w-0 items-start gap-0.5'>
+        <div className='flex min-h-7.5 min-w-0 flex-1 items-start'>{children}</div>
+        {editable === true && (
+          <Icon
+            name={isEditing ? 'close' : 'edit'}
+            size={24}
+            className='shrink-0 cursor-pointer'
+            onClick={onEditClick}
+          />
+        )}
       </div>
     </div>
   );
 }
 
-export default function ReceiptPayInfo({ editable = false, uploadData }: ReciptPayInfoProps) {
-  const isLg = useMediaQuery('(min-width: 1024px)');
-  const params = useParams<{ receiptId: string; workspaceId: string }>();
+export interface ReceiptPayInfoHandle {
+  getEditedValues: () => { storeName: string; totalAmount: number; tradeAt: string };
+}
 
-  const [editingField, setEditingField] = useState<Set<EditableField>>(new Set());
-  const [tempValue, setTempValue] = useState<Record<EditableField, string>>({
-    tradeAt: '',
-    storeName: '',
-    totalAmount: '',
-  });
+const ReceiptPayInfo = forwardRef<ReceiptPayInfoHandle, ReceiptPayInfoProps>(
+  ({ editable = false, uploadData }, ref) => {
+    const isLg = useMediaQuery('(min-width: 1024px)');
+    const params = useParams<{ receiptId: string; workspaceId: string }>();
 
-  const detailQuery = useGetReceiptDetail(Number(params.receiptId), Number(params.workspaceId), {
-    enabled: !editable,
-  });
-  const data = editable ? uploadData : detailQuery.data?.data;
-  const { data: meData } = useGetMe();
-  const { mutateAsync: updateStatus } = useUpdateStatus();
-  const { data: wsData } = useGetWorkspace(Number(params.workspaceId));
-  const isAdmin = wsData?.data.role === 'ADMIN';
-
-  const [confirmStatus, setConfirmStatus] = useState<'APPROVED' | 'REJECTED' | null>(null);
-  const [rejectReason, setRejectReason] = useState('');
-  const [isRejecting, setIsRejecting] = useState(false);
-  const [isSaving, setIsSaving] = useState(false);
-
-  const showBtn = data?.status === 'WAITING' && isAdmin && !isSaving;
-
-  function handleEditClick(field: EditableField, currentValue: string) {
-    setEditingField((prev) => {
-      const keepEditing = new Set(prev);
-      if (keepEditing.has(field)) {
-        keepEditing.delete(field);
-      } else {
-        keepEditing.add(field);
-        setTempValue((prev) => ({ ...prev, [field]: currentValue }));
-      }
-      return keepEditing;
+    const [editingField, setEditingField] = useState<Set<EditableField>>(new Set());
+    const [tempValue, setTempValue] = useState<Record<EditableField, string>>({
+      tradeAt: '',
+      storeName: '',
+      totalAmount: '',
     });
-  }
 
-  const formatDate = (iso: string) => iso.slice(0, 16).replace('T', ' ');
+    const detailQuery = useGetReceiptDetail(Number(params.receiptId), Number(params.workspaceId), {
+      enabled: !editable,
+    });
+    const data = editable ? uploadData : detailQuery.data?.data;
+    const { data: meData } = useGetMe();
+    const { mutateAsync: updateStatus } = useUpdateStatus();
+    const { data: wsData } = useGetWorkspace(Number(params.workspaceId));
+    const isAdmin = wsData?.data.role === 'ADMIN';
 
-  const formatAmount = (amount: number) => `₩${amount.toLocaleString('ko-KR')}`;
+    const [confirmStatus, setConfirmStatus] = useState<'APPROVED' | 'REJECTED' | null>(null);
+    const [rejectReason, setRejectReason] = useState('');
+    const [isRejecting, setIsRejecting] = useState(false);
+    const [isSaving, setIsSaving] = useState(false);
+    const [showReason, setShowReason] = useState(false);
 
-  if (!editable && detailQuery.isLoading) {
-    return <div>로딩중...</div>;
-  }
-  if (!editable && detailQuery.isError) {
-    return <div>{detailQuery.error.message}</div>;
-  }
-  if (!data) {
-    return null;
-  }
+    const showBtn = data?.status === 'WAITING' && isAdmin && !isSaving;
 
-  return (
-    <div>
-      {confirmStatus && (
-        <Modal onClose={() => setConfirmStatus(null)}>
-          <ConfirmModal
-            message={
-              confirmStatus === 'APPROVED'
-                ? '영수증을 승인하시겠습니까?'
-                : '영수증을 반려하시겠습니까?'
-            }
-            onConfirm={async () => {
-              await updateStatus({
-                id: Number(params.receiptId),
-                workspaceId: Number(params.workspaceId),
-                status: confirmStatus === 'APPROVED' ? 'APPROVED' : 'REJECTED',
-              });
-            }}
-            onClose={() => setConfirmStatus(null)}
-          />
-        </Modal>
-      )}
+    function handleEditClick(field: EditableField, currentValue: string) {
+      setEditingField((prev) => {
+        const next = new Set(prev);
+        if (next.has(field)) {
+          next.delete(field);
+        } else {
+          next.add(field);
+          setTempValue((prev) => ({ ...prev, [field]: currentValue }));
+        }
+        return next;
+      });
+    }
 
-      <div className={cn('min-w-[236.5px] rounded-lg border border-gray-300 p-4 lg:max-w-100')}>
-        {isLg ? (
-          <div
-            className={cn('grid grid-cols-2 gap-2.5')}
-            style={{ gridTemplateColumns: '55% 45%' }}
+    const formatDate = (iso: string) => iso.slice(0, 16).replace('T', ' ');
+    const formatAmount = (amount: number) => `₩${amount.toLocaleString('ko-KR')}`;
+
+    useImperativeHandle(
+      ref,
+      () => ({
+        getEditedValues: () => ({
+          storeName: editingField.has('storeName') ? tempValue.storeName : (data?.storeName ?? ''),
+          totalAmount: editingField.has('totalAmount')
+            ? Number(tempValue.totalAmount.replace(/,/g, ''))
+            : (data?.totalAmount ?? 0),
+          tradeAt: (editingField.has('tradeAt')
+            ? tempValue.tradeAt
+            : (data?.tradeAt ?? '')
+          ).replace('T', ' '),
+        }),
+      }),
+      [editingField, tempValue, data],
+    );
+
+    if (!editable && detailQuery.isLoading) return <div>로딩중...</div>;
+    if (!editable && detailQuery.isError) return <div>{detailQuery.error.message}</div>;
+    if (!data) return null;
+
+    const rejectSaveAction = isRejecting ? (
+      <Button
+        group='sub'
+        variant='blue'
+        disabled={!rejectReason.trim()}
+        onClick={() => {
+          setConfirmStatus('REJECTED');
+        }}
+        className={cn('h-5 w-8.5 rounded-sm text-[10px] leading-4.5 font-medium')}
+      >
+        저장
+      </Button>
+    ) : undefined;
+
+    const statusContent =
+      showBtn && !isRejecting ? (
+        <div className={cn('flex gap-1.5')}>
+          <Button
+            group='sub'
+            variant='blue'
+            onClick={() => setConfirmStatus('APPROVED')}
+            className={cn('h-6.5 w-22.75 text-xs font-medium')}
           >
-            <div className={cn('flex flex-col gap-4')}>
-              <InfoItem label='게시자'>
-                <Avatar
-                  name={
-                    editable
-                      ? (meData?.data.name ?? '')
-                      : ((data as ReceiptDetailResponse['data']).userName ?? '')
-                  }
-                  picture={
-                    editable
-                      ? (meData?.data?.picture ?? null)
-                      : ((data as ReceiptDetailResponse['data']).userPicture ?? null)
-                  }
-                />
-              </InfoItem>
-              <InfoItem label='AI 분석 결과'>
-                <ResultChip reasons={data.inappropriateReasons} />
-              </InfoItem>
-              <InfoItem
-                label='상태'
-                action={
-                  isRejecting && (
-                    <Button
-                      group='sub'
-                      variant='blue'
-                      onClick={async () => {
-                        setIsSaving(true);
-                        await updateStatus({
-                          id: Number(params.receiptId),
-                          workspaceId: Number(params.workspaceId),
-                          status: 'REJECTED',
-                          reason: rejectReason,
-                        });
-                        setIsRejecting(false);
-                      }}
-                      className={cn('h-5 w-8.5 rounded-sm text-[10px] leading-4.5 font-medium')}
-                    >
-                      저장
-                    </Button>
-                  )
-                }
+            승인
+          </Button>
+          <Button
+            group='sub'
+            variant='white'
+            onClick={() => setIsRejecting(true)}
+            className={cn('h-6.5 w-22.75 text-xs font-medium')}
+          >
+            반려
+          </Button>
+        </div>
+      ) : isRejecting ? (
+        <input
+          type='text'
+          value={rejectReason}
+          onChange={(e) => setRejectReason(e.target.value)}
+          placeholder='반려 사유를 입력해 주세요'
+          className={cn(
+            'w-50 md:w-60 lg:w-46',
+            'text-black-400 rounded-sm border border-gray-300 px-1.5 py-1.25 text-xs placeholder:text-gray-400',
+            'hover:border-blue-200 focus:border-blue-200 focus:outline-none',
+          )}
+        />
+      ) : (
+        <div className='flex flex-col gap-1'>
+          <div className='flex items-start gap-2.5'>
+            {' '}
+            <StatusChip status={data.status} />
+            {data.status === 'REJECTED' && data.rejectionReason && (
+              <button
+                onClick={() => setShowReason((v) => !v)}
+                className='cursor-pointer text-sm text-gray-400 underline underline-offset-2'
               >
-                {showBtn && !isRejecting ? (
-                  <div className={cn('flex gap-1.5')}>
-                    <Button
-                      group='sub'
-                      variant='blue'
-                      onClick={() => setConfirmStatus('APPROVED')}
-                      className={cn('h-6.5 w-22.75 text-xs font-medium')}
-                    >
-                      승인
-                    </Button>
-                    <Button
-                      group='sub'
-                      variant='white'
-                      onClick={() => setIsRejecting(true)}
-                      className={cn('h-6.5 w-22.75 text-xs font-medium')}
-                    >
-                      반려
-                    </Button>
-                  </div>
-                ) : isRejecting ? (
-                  <input
-                    type='text'
-                    value={rejectReason}
-                    onChange={(e) => setRejectReason(e.target.value)}
-                    placeholder='반려 사유를 입력해주세요'
-                    className={cn(
-                      'text-black-400 rounded-sm border border-gray-300 px-1.5 py-1.25 text-xs placeholder:text-gray-400',
-                    )}
-                  />
-                ) : (
-                  <div className={cn('flex items-center gap-1.5')}>
-                    <StatusChip status={data.status} />
-                    {data.status === 'REJECTED' && data.rejectionReason && (
-                      <span
-                        title={data.rejectionReason}
-                        className={cn('text-md text-black-200 max-w-30 truncate')}
-                      >
-                        {data.rejectionReason}
-                      </span>
-                    )}
-                  </div>
-                )}
-              </InfoItem>
+                사유 {showReason ? '접기' : '보기'}
+              </button>
+            )}
+          </div>
+          {showReason && data.rejectionReason && (
+            <p className={cn('text-black-200 text-md pl-0.5 break-keep')}>{data.rejectionReason}</p>
+          )}
+        </div>
+      );
+
+    const posterName = editable
+      ? (meData?.data.name ?? '')
+      : ((data as ReceiptDetailResponse['data']).userName ?? '');
+    const posterPicture = editable
+      ? (meData?.data?.picture ?? null)
+      : ((data as ReceiptDetailResponse['data']).userPicture ?? null);
+
+    return (
+      <div>
+        {confirmStatus && (
+          <Modal onClose={() => setConfirmStatus(null)}>
+            <ConfirmModal
+              message={
+                confirmStatus === 'APPROVED'
+                  ? '영수증을 승인하시겠습니까?'
+                  : '영수증을 반려하시겠습니까?'
+              }
+              onConfirm={async () => {
+                try {
+                  setIsSaving(true);
+                  await updateStatus({
+                    id: Number(params.receiptId),
+                    workspaceId: Number(params.workspaceId),
+                    status: confirmStatus,
+                    ...(confirmStatus === 'REJECTED' && { reason: rejectReason }),
+                  });
+
+                  toast.success(
+                    confirmStatus === 'APPROVED'
+                      ? '영수증이 승인되었습니다.'
+                      : '영수증이 반려되었습니다.',
+                  );
+
+                  if (confirmStatus === 'REJECTED') {
+                    setIsRejecting(false);
+                    setRejectReason('');
+                  }
+                } catch (error) {
+                  toast.error(
+                    confirmStatus === 'APPROVED'
+                      ? '영수증 승인에 실패했습니다.'
+                      : '영수증 반려에 실패했습니다.',
+                  );
+                  console.error(error);
+                } finally {
+                  setIsSaving(false);
+                  setConfirmStatus(null);
+                }
+              }}
+              onClose={() => setConfirmStatus(null)}
+            />
+          </Modal>
+        )}
+
+        <div className={cn('min-w-[236.5px] rounded-lg border border-gray-300 p-4 lg:w-100')}>
+          {isLg ? (
+            <div
+              className={cn('grid grid-cols-2 gap-2.5')}
+              style={{ gridTemplateColumns: '55fr 45fr' }}
+            >
+              <div className={cn('flex flex-col gap-4')}>
+                <InfoItem label='게시자'>
+                  <Avatar name={posterName} picture={posterPicture} />
+                </InfoItem>
+                <InfoItem label='AI 분석 결과'>
+                  <ResultChip reasons={data.inappropriateReasons} />
+                </InfoItem>
+                <InfoItem label='상태' action={rejectSaveAction} className='w-fit'>
+                  {statusContent}
+                </InfoItem>
+              </div>
+              <div className={cn('text-md flex flex-col gap-4')}>
+                <InfoItem
+                  label='결제일'
+                  editable={editable}
+                  isEditing={editingField.has('tradeAt')}
+                  onEditClick={() => handleEditClick('tradeAt', data.tradeAt)}
+                >
+                  {editingField.has('tradeAt') ? (
+                    <DatePicker
+                      selected={(() => {
+                        const val = tempValue.tradeAt || data.tradeAt;
+                        return new Date(val.includes('T') ? val : val.replace(' ', 'T'));
+                      })()}
+                      onChange={(date: Date | null) => {
+                        if (!date) return;
+                        const pad = (n: number) => String(n).padStart(2, '0');
+                        setTempValue((prev) => ({
+                          ...prev,
+                          tradeAt: `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}:00`,
+                        }));
+                      }}
+                      showTimeSelect
+                      timeCaption='시간'
+                      timeFormat='HH:mm'
+                      timeIntervals={1}
+                      dateFormat='yyyy-MM-dd HH:mm'
+                      locale='ko'
+                      popperProps={{ strategy: 'fixed' }}
+                      wrapperClassName='w-full'
+                      className={cn(
+                        'text-black-200 h-7 w-full rounded-md border border-gray-300 px-2 py-1 text-sm focus:border-blue-200 focus:outline-none',
+                      )}
+                    />
+                  ) : (
+                    <span className='text-sm'>{formatDate(data.tradeAt)}</span>
+                  )}
+                </InfoItem>
+                <InfoItem
+                  label='가맹점'
+                  editable={editable}
+                  isEditing={editingField.has('storeName')}
+                  onEditClick={() => handleEditClick('storeName', data.storeName)}
+                >
+                  {editingField.has('storeName') ? (
+                    <input
+                      type='text'
+                      value={tempValue.storeName}
+                      onChange={(e) =>
+                        setTempValue((prev) => ({ ...prev, storeName: e.target.value }))
+                      }
+                      className={cn(
+                        'text-black-200 h-7 w-full rounded-md border border-gray-300 px-2 py-1 text-sm focus:border-blue-200 focus:outline-none',
+                      )}
+                    />
+                  ) : (
+                    <span className='text-sm'>{data.storeName}</span>
+                  )}
+                </InfoItem>
+                <InfoItem
+                  label='결제 금액'
+                  editable={editable}
+                  isEditing={editingField.has('totalAmount')}
+                  onEditClick={() =>
+                    handleEditClick('totalAmount', data.totalAmount.toLocaleString('ko-KR'))
+                  }
+                >
+                  {editingField.has('totalAmount') ? (
+                    <input
+                      type='text'
+                      value={tempValue.totalAmount}
+                      onChange={(e) => {
+                        const raw = e.target.value.replace(/[^0-9]/g, '');
+                        setTempValue((prev) => ({
+                          ...prev,
+                          totalAmount: raw ? Number(raw).toLocaleString('ko-KR') : '',
+                        }));
+                      }}
+                      className={cn(
+                        'text-black-200 h-7 w-full rounded-md border border-gray-300 px-2 py-1 text-sm focus:border-blue-200 focus:outline-none',
+                      )}
+                    />
+                  ) : (
+                    <span className='text-sm'>{formatAmount(data.totalAmount)}</span>
+                  )}
+                </InfoItem>
+              </div>
             </div>
-            <div className={cn('text-md flex flex-col gap-4')}>
+          ) : (
+            <div className={cn('text-md flex min-w-0 flex-col gap-4')}>
+              <InfoItem label='게시자'>
+                <Avatar name={posterName} picture={posterPicture} />
+              </InfoItem>
               <InfoItem
                 label='결제일'
                 editable={editable}
                 isEditing={editingField.has('tradeAt')}
                 onEditClick={() => handleEditClick('tradeAt', data.tradeAt)}
-                className='h-6'
               >
                 {editingField.has('tradeAt') ? (
-                  <input
-                    type='text'
-                    value={tempValue.tradeAt}
-                    onChange={(e) => setTempValue((prev) => ({ ...prev, tradeAt: e.target.value }))}
+                  <DatePicker
+                    selected={(() => {
+                      const val = tempValue.tradeAt || data.tradeAt;
+                      return new Date(val.includes('T') ? val : val.replace(' ', 'T'));
+                    })()}
+                    onChange={(date: Date | null) => {
+                      if (!date) return;
+                      const pad = (n: number) => String(n).padStart(2, '0');
+                      setTempValue((prev) => ({
+                        ...prev,
+                        tradeAt: `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}:00`,
+                      }));
+                    }}
+                    showTimeSelect
+                    timeCaption='시간'
+                    timeFormat='HH:mm'
+                    timeIntervals={1}
+                    dateFormat='yyyy-MM-dd HH:mm'
+                    locale='ko'
+                    popperProps={{ strategy: 'fixed' }}
+                    wrapperClassName='w-full'
                     className={cn(
-                      'text-black-200 h-5 w-full rounded-xl border border-gray-300 px-3.5 py-3 text-lg focus:border-blue-200 focus:outline-none',
+                      'text-black-200 h-7 w-full rounded-md border border-gray-300 px-2 py-1 text-sm focus:border-blue-200 focus:outline-none',
                     )}
                   />
                 ) : (
-                  formatDate(data.tradeAt)
+                  <span className='text-sm'>{formatDate(data.tradeAt)}</span>
                 )}
               </InfoItem>
               <InfoItem
@@ -252,7 +408,6 @@ export default function ReceiptPayInfo({ editable = false, uploadData }: ReciptP
                 editable={editable}
                 isEditing={editingField.has('storeName')}
                 onEditClick={() => handleEditClick('storeName', data.storeName)}
-                className='h-6'
               >
                 {editingField.has('storeName') ? (
                   <input
@@ -262,186 +417,53 @@ export default function ReceiptPayInfo({ editable = false, uploadData }: ReciptP
                       setTempValue((prev) => ({ ...prev, storeName: e.target.value }))
                     }
                     className={cn(
-                      'text-black-200 h-5 w-full rounded-xl border border-gray-300 px-3.5 py-3 text-lg focus:border-blue-200 focus:outline-none',
+                      'text-black-200 h-7 w-full rounded-md border border-gray-300 px-2 py-1 text-sm focus:border-blue-200 focus:outline-none',
                     )}
                   />
                 ) : (
-                  data.storeName
+                  <span className='text-sm'>{data.storeName}</span>
                 )}
               </InfoItem>
               <InfoItem
                 label='결제 금액'
                 editable={editable}
                 isEditing={editingField.has('totalAmount')}
-                onEditClick={() => handleEditClick('totalAmount', String(data.totalAmount))}
-                className='h-6'
+                onEditClick={() =>
+                  handleEditClick('totalAmount', data.totalAmount.toLocaleString('ko-KR'))
+                }
               >
                 {editingField.has('totalAmount') ? (
                   <input
                     type='text'
                     value={tempValue.totalAmount}
-                    onChange={(e) =>
-                      setTempValue((prev) => ({ ...prev, totalAmount: e.target.value }))
-                    }
+                    onChange={(e) => {
+                      const raw = e.target.value.replace(/[^0-9]/g, '');
+                      setTempValue((prev) => ({
+                        ...prev,
+                        totalAmount: raw ? Number(raw).toLocaleString('ko-KR') : '',
+                      }));
+                    }}
                     className={cn(
-                      'text-black-200 h-5 w-full rounded-xl border border-gray-300 px-3.5 py-3 text-lg focus:border-blue-200 focus:outline-none',
+                      'text-black-200 h-7 w-full rounded-md border border-gray-300 px-2 py-1 text-sm focus:border-blue-200 focus:outline-none',
                     )}
                   />
                 ) : (
-                  formatAmount(data.totalAmount)
+                  <span className='text-sm'>{formatAmount(data.totalAmount)}</span>
                 )}
               </InfoItem>
+              <InfoItem label='AI 분석 결과'>
+                <ResultChip reasons={data.inappropriateReasons} />
+              </InfoItem>
+              <InfoItem label='상태' action={rejectSaveAction} className='w-fit'>
+                {statusContent}
+              </InfoItem>
             </div>
-          </div>
-        ) : (
-          <div className={cn('text-md flex min-w-0 flex-col gap-4')}>
-            <InfoItem label='게시자'>
-              <Avatar
-                name={
-                  editable
-                    ? (meData?.data.name ?? '')
-                    : ((data as ReceiptDetailResponse['data']).userName ?? '')
-                }
-                picture={
-                  editable
-                    ? (meData?.data?.picture ?? null)
-                    : ((data as ReceiptDetailResponse['data']).userPicture ?? null)
-                }
-              />
-            </InfoItem>
-            <InfoItem
-              label='결제일'
-              editable={editable}
-              isEditing={editingField.has('tradeAt')}
-              onEditClick={() => handleEditClick('tradeAt', data.tradeAt)}
-              className='h-6'
-            >
-              {editingField.has('tradeAt') ? (
-                <input
-                  type='text'
-                  value={tempValue.tradeAt}
-                  onChange={(e) => setTempValue((prev) => ({ ...prev, tradeAt: e.target.value }))}
-                  className={cn(
-                    'text-black-200 h-5 w-full rounded-xl border border-gray-300 px-3.5 py-3 text-lg focus:border-blue-200 focus:outline-none',
-                  )}
-                />
-              ) : (
-                formatDate(data.tradeAt)
-              )}
-            </InfoItem>
-            <InfoItem
-              label='가맹점'
-              editable={editable}
-              isEditing={editingField.has('storeName')}
-              onEditClick={() => handleEditClick('storeName', data.storeName)}
-              className='h-6'
-            >
-              {editingField.has('storeName') ? (
-                <input
-                  type='text'
-                  value={tempValue.storeName}
-                  onChange={(e) => setTempValue((prev) => ({ ...prev, storeName: e.target.value }))}
-                  className={cn(
-                    'text-black-200 h-5 w-full rounded-xl border border-gray-300 px-3.5 py-3 text-lg focus:border-blue-200 focus:outline-none',
-                  )}
-                />
-              ) : (
-                data.storeName
-              )}
-            </InfoItem>
-            <InfoItem
-              label='결제 금액'
-              editable={editable}
-              isEditing={editingField.has('totalAmount')}
-              onEditClick={() => handleEditClick('totalAmount', String(data.totalAmount))}
-              className='h-6'
-            >
-              {editingField.has('totalAmount') ? (
-                <input
-                  type='text'
-                  value={tempValue.totalAmount}
-                  onChange={(e) =>
-                    setTempValue((prev) => ({ ...prev, totalAmount: e.target.value }))
-                  }
-                  className={cn(
-                    'text-black-200 h-5 w-full rounded-xl border border-gray-300 px-3.5 py-3 text-lg focus:border-blue-200 focus:outline-none',
-                  )}
-                />
-              ) : (
-                formatAmount(data.totalAmount)
-              )}
-            </InfoItem>
-            <InfoItem label='AI 분석 결과'>
-              <ResultChip reasons={data.inappropriateReasons} />
-            </InfoItem>
-            <InfoItem
-              label='상태'
-              action={
-                isRejecting && (
-                  <Button
-                    group='sub'
-                    variant='blue'
-                    onClick={async () => {
-                      setIsSaving(true);
-                      await updateStatus({
-                        id: Number(params.receiptId),
-                        workspaceId: Number(params.workspaceId),
-                        status: 'REJECTED',
-                        reason: rejectReason,
-                      });
-                      setIsRejecting(false);
-                    }}
-                    className={cn('h-5 w-8.5 rounded-sm text-[10px] leading-4.5 font-medium')}
-                  >
-                    저장
-                  </Button>
-                )
-              }
-            >
-              {showBtn && !isRejecting ? (
-                <div className={cn('flex gap-1.5')}>
-                  <Button
-                    group='sub'
-                    variant='blue'
-                    onClick={() => setConfirmStatus('APPROVED')}
-                    className={cn('h-6.5 w-22.75 text-xs font-medium')}
-                  >
-                    승인
-                  </Button>
-                  <Button
-                    group='sub'
-                    variant='white'
-                    onClick={() => setIsRejecting(true)}
-                    className={cn('h-6.5 w-22.75 text-xs font-medium')}
-                  >
-                    반려
-                  </Button>
-                </div>
-              ) : isRejecting ? (
-                <input
-                  type='text'
-                  value={rejectReason}
-                  onChange={(e) => setRejectReason(e.target.value)}
-                  placeholder='반려 사유를 입력해주세요'
-                  className={cn('rounded-sm border border-gray-300 px-1.5 py-1.25')}
-                />
-              ) : (
-                <div className={cn('flex items-center gap-1.5')}>
-                  <StatusChip status={data.status} />
-                  {data.status === 'REJECTED' && data.rejectionReason && (
-                    <span
-                      title={data.rejectionReason}
-                      className={cn('text-md text-black-200 max-w-37.5 truncate')}
-                    >
-                      {data.rejectionReason}
-                    </span>
-                  )}
-                </div>
-              )}
-            </InfoItem>
-          </div>
-        )}
+          )}
+        </div>
       </div>
-    </div>
-  );
-}
+    );
+  },
+);
+
+ReceiptPayInfo.displayName = 'ReceiptPayInfo';
+export default ReceiptPayInfo;
