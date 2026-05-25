@@ -29,11 +29,70 @@ export interface ReceiptUploadResponse {
     confidence: number;
     fileAssetId: number;
     tags: ReceiptTag[];
+    items: ReceiptItem[];
     createdAt: string;
     duplicate: boolean;
     inappropriateReasons: string[];
     discountAmount: number;
     aiReason: string;
+    userPicture: string;
+    amountMismatch: boolean;
+  };
+  meta: {
+    timestamp: string;
+    traceId: string;
+  };
+}
+
+export interface UpdateReceiptReq {
+  storeName: string;
+  totalAmount: number;
+  tradeAt: string;
+}
+
+export interface UpdateReceiptResponse {
+  success: boolean;
+  data: {
+    id: number;
+    status: ReceiptStatus;
+    systemErrorCode: string | null;
+    storeName: string;
+    tradeAt: string;
+    totalAmount: number;
+    nightTime: boolean;
+    rejectionReason: string | null;
+    approvedAt: string | null;
+    tax: number;
+    confidence: number;
+    fileAssetId: number;
+    tags: ReceiptTag[];
+    createdAt: string;
+  };
+  meta: {
+    timestamp: string;
+    traceId: string;
+  };
+}
+
+export interface ReceiptConfirmResponse {
+  success: boolean;
+  data: {
+    id: number;
+    status: ReceiptStatus;
+    systemErrorCode: string | null;
+    storeName: string;
+    tradeAt: string;
+    totalAmount: number;
+    nightTime: boolean;
+    rejectionReason: string | null;
+    approvedAt: string | null;
+    tax: number;
+    confidence: number;
+    fileAssetId: number;
+    tags: ReceiptTag[];
+    createdAt: string;
+    items: ReceiptItem[];
+    userPicture: string;
   };
   meta: {
     timestamp: string;
@@ -55,6 +114,7 @@ export interface ReceiptDetailResponse {
     userName: string;
     userId: number;
     filePath: string;
+    fileAssetId: number;
     tags: ReceiptTag[];
     items: ReceiptItem[];
     nightTime: boolean;
@@ -63,6 +123,7 @@ export interface ReceiptDetailResponse {
     aiReason: string;
     category: string;
     userPicture: string;
+    amountMismatch: boolean;
   };
   meta: {
     timestamp: string;
@@ -124,4 +185,9 @@ export interface ReceiptListParams {
   sort?: 'LATEST' | 'OLDEST';
   page?: number;
   size?: number;
+}
+
+export interface ExportSelectedReceiptsReq {
+  receiptIds: number[];
+  workspaceId: number;
 }

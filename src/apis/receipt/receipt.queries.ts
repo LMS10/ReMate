@@ -1,7 +1,7 @@
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useSession } from 'next-auth/react';
 import { receiptService } from './receipt.service';
-import { ReceiptListParams } from './receipt.type';
+import { ExportSelectedReceiptsReq, ReceiptListParams, UpdateReceiptReq } from './receipt.type';
 
 export const receiptKeys = {
   all: ['receipts'] as const,
@@ -22,6 +22,48 @@ export const useUploadReceipt = () => {
   return useMutation({
     mutationFn: ({ file, workspaceId }: { file: File; workspaceId: number }) =>
       receiptService.uploadReceipt(file, workspaceId, accessToken!),
+  });
+};
+
+export const useUpdateReceipt = () => {
+  const { data: session } = useSession();
+
+  return useMutation({
+    mutationFn: ({
+      id,
+      workspaceId,
+      body,
+    }: {
+      id: number;
+      workspaceId: number;
+      body: UpdateReceiptReq;
+    }) => receiptService.updateReceipt(id, workspaceId, body, session?.accessToken ?? ''),
+  });
+};
+
+export const useConfirmReceipt = () => {
+  const { data: session } = useSession();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ id, workspaceId }: { id: number; workspaceId: number }) =>
+      receiptService.confirmReceipt(id, workspaceId, session?.accessToken ?? ''),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['receipts'] });
+    },
+  });
+};
+
+export const useDeleteReceipt = () => {
+  const { data: session } = useSession();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ id, workspaceId }: { id: number; workspaceId: number }) =>
+      receiptService.deleteReceipt(id, workspaceId, session?.accessToken ?? ''),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['receipts'] });
+    },
   });
 };
 
@@ -92,5 +134,31 @@ export const useUpdateStatus = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['receipts'] });
     },
+  });
+};
+
+export const useExportSelectedReceipts = () => {
+  const { data: session } = useSession();
+  const accessToken = session?.accessToken as string | undefined;
+
+  return useMutation({
+    mutationFn: (data: ExportSelectedReceiptsReq) =>
+      receiptService.exportSelectedReceipts(data, accessToken!),
+  });
+};
+
+export const useGetReceiptFile = (fileAssetId: number | undefined) => {
+  const { data: session } = useSession();
+  const accessToken = session?.accessToken as string | undefined;
+
+  return useQuery({
+    queryKey: ['receiptFile', fileAssetId],
+    queryFn: async () => {
+      const url = await receiptService.getReceiptFile(fileAssetId!, accessToken!);
+      return url;
+    },
+    enabled: !!accessToken && !!fileAssetId,
+    staleTime: 1000 * 60 * 5,
+    gcTime: 1000 * 60 * 5,
   });
 };
