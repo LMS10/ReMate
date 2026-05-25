@@ -6,11 +6,11 @@ interface ResultChipProps {
 
 const reasonMap: Record<string, { label: string; style: string }> = {
   NIGHT_PAYMENT: {
-    label: '심야/공휴일 결제',
+    label: '심야 결제',
     style: 'border-status-return-text text-status-return-text',
   },
   HOLIDAY_PAYMENT: {
-    label: '심야/공휴일 결제',
+    label: '공휴일 결제',
     style: 'border-status-return-text text-status-return-text',
   },
   SUSPICIOUS_ENTERTAINMENT: {
@@ -37,7 +37,7 @@ export default function ResultChip({ reasons }: ResultChipProps) {
   }
 
   return (
-    <div>
+    <div className='flex flex-wrap gap-1.5'>
       {reasons.map((reason) => {
         const chipLabel = reasonMap[reason];
 
