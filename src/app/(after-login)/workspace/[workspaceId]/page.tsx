@@ -1,17 +1,18 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { toast } from 'react-toastify';
 import { useParams, useRouter } from 'next/navigation';
 import {
   useGetReceiptStats,
   useGetReceiptList,
   useExportReceipts,
+  useExportSelectedReceipts,
 } from '@/apis/receipt/receipt.queries';
-import { useGetWorkspace } from '@/apis/workspace/workspace.queries';
-import { useGetWorkspaceMembers } from '@/apis/workspace/workspace.queries';
+import { useGetWorkspace, useGetWorkspaceMembers } from '@/apis/workspace/workspace.queries';
 import Button from '@/components/Buttons';
 import Dropdown from '@/components/Dropdown';
+import Icon from '@/components/Icon';
 import Input from '@/components/Input';
 import StatCard from '@/components/StatCard';
 import StatusChip from '@/components/StatusChip';
@@ -43,19 +44,51 @@ export default function Page() {
   const isMobile = useMediaQuery('(max-width: 767px)');
   const pageSize = isMobile ? 5 : 6;
 
+  const storageKey = `workspace_page_${workspaceId}`;
+  const [page, setPageState] = useState(() => {
+    if (typeof window === 'undefined') return 0;
+    const saved = sessionStorage.getItem(storageKey);
+    return saved !== null ? Number(saved) : 0;
+  });
+
+  const setPage = useCallback(
+    (newPage: number) => {
+      setPageState(newPage);
+      sessionStorage.setItem(storageKey, String(newPage));
+    },
+    [storageKey],
+  );
+
   const [storeName, setStoreName] = useState('');
   const [selectedMemberName, setSelectedMemberName] = useState<string | null>(null);
   const [selectedStatus, setSelectedStatus] = useState<string | null>(null);
   const [selectedSort, setSelectedSort] = useState<string | null>(null);
-  const [page, setPage] = useState(0);
+
+  const [selectedReceiptIds, setSelectedReceiptIds] = useState<Set<number>>(new Set());
 
   const { data: workspaceData, isError: isWorkspaceError } = useGetWorkspace(workspaceId);
   const isAdmin = workspaceData?.data?.role === 'ADMIN';
 
-  const { data: membersData, isError: isMembersError } = useGetWorkspaceMembers(
-    workspaceId,
-    'ACCEPTED',
-  );
+  const {
+    data: membersData,
+    isError: isMembersError,
+    refetch: refetchMembers,
+  } = useGetWorkspaceMembers(workspaceId, 'ACCEPTED');
+
+  useEffect(() => {
+    refetchMembers();
+  }, [workspaceId, refetchMembers]);
+
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        refetchMembers();
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+  }, [refetchMembers]);
+
   const memberOptions = ['전체', ...(membersData?.data?.map((m) => m.name) ?? [])];
   const selectedMember =
     selectedMemberName != null
@@ -65,8 +98,9 @@ export default function Page() {
   const { data: statsData, isError: isStatsError } = useGetReceiptStats(workspaceId);
 
   useEffect(() => {
-    setPage(0);
-  }, [storeName, selectedMemberName, selectedStatus, selectedSort]);
+    const saved = sessionStorage.getItem(storageKey);
+    setPageState(saved !== null ? Number(saved) : 0);
+  }, [storageKey]);
 
   const listParams = {
     workspaceId,
@@ -80,6 +114,8 @@ export default function Page() {
   const { data: listData, isError: isListError } = useGetReceiptList(listParams);
 
   const { mutateAsync: exportReceipts, isPending: isExporting } = useExportReceipts();
+  const { mutateAsync: exportSelectedReceipts, isPending: isExportingSelected } =
+    useExportSelectedReceipts();
 
   useEffect(() => {
     if (isWorkspaceError) toast.error('워크스페이스 정보를 불러오지 못했습니다.');
@@ -101,10 +137,46 @@ export default function Page() {
   const receipts = listData?.data ?? [];
   const totalPages = listData?.totalPages ?? 1;
 
-  const handleDownloadClick = async () => {
+  useEffect(() => {
+    setSelectedReceiptIds(new Set());
+  }, [page, listData]);
+
+  const isAllSelected = receipts.length > 0 && receipts.every((r) => selectedReceiptIds.has(r.id));
+
+  const handleToggleAll = () => {
+    if (isAllSelected) {
+      setSelectedReceiptIds(new Set());
+    } else {
+      setSelectedReceiptIds(new Set(receipts.map((r) => r.id)));
+    }
+  };
+
+  const handleToggleReceipt = (id: number) => {
+    setSelectedReceiptIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      return next;
+    });
+  };
+
+  const handleDownloadAll = async () => {
     try {
       await exportReceipts(workspaceId);
       toast.success('다운로드가 완료되었습니다.');
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : '다운로드에 실패했습니다.');
+    }
+  };
+
+  const handleDownloadSelected = async () => {
+    try {
+      await exportSelectedReceipts({ workspaceId, receiptIds: Array.from(selectedReceiptIds) });
+      toast.success('선택한 영수증 다운로드가 완료되었습니다.');
+      setSelectedReceiptIds(new Set());
     } catch (e) {
       toast.error(e instanceof Error ? e.message : '다운로드에 실패했습니다.');
     }
@@ -148,30 +220,45 @@ export default function Page() {
       </section>
 
       <section className='flex flex-col gap-3 overflow-visible rounded-lg bg-white p-3.5 md:gap-5 md:p-4.5 lg:px-8.75 lg:py-6.5'>
-        <div className='flex items-center justify-between'>
+        <div className='flex items-start justify-between md:items-center'>
           <h2 className='text-lg font-bold md:text-xl'>영수증 목록</h2>
-          <div className='flex gap-1.5 md:gap-2'>
-            {isAdmin && (
+          <div className='flex flex-col-reverse items-end gap-1.5 md:flex-row md:items-center md:gap-2'>
+            {isAdmin && selectedReceiptIds.size > 0 && (
+              <Button
+                group='sub'
+                variant='white'
+                size='sm'
+                className='md:text-md w-32.75 disabled:bg-white md:h-8'
+                onClick={handleDownloadSelected}
+                loading={isExportingSelected}
+              >
+                선택 다운로드 ({selectedReceiptIds.size})
+              </Button>
+            )}
+
+            <div className='flex gap-1.5 md:gap-2'>
+              {isAdmin && (
+                <Button
+                  group='sub'
+                  variant='blue'
+                  size='sm'
+                  className='md:text-md w-17 md:h-8 md:w-17.5'
+                  onClick={handleDownloadAll}
+                  loading={isExporting}
+                >
+                  다운로드
+                </Button>
+              )}
               <Button
                 group='sub'
                 variant='blue'
                 size='sm'
-                className='md:text-md w-17 md:h-8 md:w-17.5'
-                onClick={handleDownloadClick}
-                loading={isExporting}
+                className='md:text-md w-14.25 md:h-8 md:w-14.75'
+                onClick={() => router.push(`/workspace/${workspaceId}/upload`)}
               >
-                다운로드
+                업로드
               </Button>
-            )}
-            <Button
-              group='sub'
-              variant='blue'
-              size='sm'
-              className='md:text-md w-14.25 md:h-8 md:w-14.75'
-              onClick={() => router.push(`/workspace/${workspaceId}/upload`)}
-            >
-              업로드
-            </Button>
+            </div>
           </div>
         </div>
 
@@ -213,9 +300,38 @@ export default function Page() {
         <div className='hidden md:block'>
           <table className='w-full table-fixed text-sm md:text-base'>
             <thead>
-              <tr className='text-black-200 border-b border-gray-200 text-left'>
-                <th className='w-[18%] pb-4 text-lg font-medium text-gray-400'>게시자</th>
-                <th className='w-[32%] pb-4 text-lg font-medium text-gray-400'>가맹점</th>
+              <tr className='text-black-200 border-b border-gray-200 text-left [&>th:first-child]:pl-1.5'>
+                {isAdmin && (
+                  <th className='w-[5%] pb-4'>
+                    <button
+                      onClick={handleToggleAll}
+                      className='flex cursor-pointer items-center'
+                      aria-label='전체 선택'
+                    >
+                      {isAllSelected ? (
+                        <Icon name='checkboxActive' size={18} className='overflow-visible' />
+                      ) : (
+                        <Icon name='checkboxDefault' size={18} className='overflow-visible' />
+                      )}
+                    </button>
+                  </th>
+                )}
+                <th
+                  className={cn(
+                    'pb-4 text-lg font-medium text-gray-400',
+                    isAdmin ? 'w-[17%]' : 'w-[18%]',
+                  )}
+                >
+                  게시자
+                </th>
+                <th
+                  className={cn(
+                    'pb-4 text-lg font-medium text-gray-400',
+                    isAdmin ? 'w-[28%]' : 'w-[32%]',
+                  )}
+                >
+                  가맹점
+                </th>
                 <th className='w-[16%] pb-4 text-lg font-medium text-gray-400'>금액</th>
                 <th className='w-[16%] pb-4 text-lg font-medium text-gray-400'>상태</th>
                 <th className='w-[18%] pb-4 text-lg font-medium text-gray-400'>게시일</th>
@@ -224,7 +340,7 @@ export default function Page() {
             <tbody>
               {receipts.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className='text-md py-10 text-center text-gray-400'>
+                  <td colSpan={isAdmin ? 6 : 5} className='text-md py-10 text-center text-gray-400'>
                     영수증이 없습니다.
                   </td>
                 </tr>
@@ -232,9 +348,24 @@ export default function Page() {
                 receipts.map((receipt) => (
                   <tr
                     key={receipt.id}
-                    className='text-black-200 cursor-pointer border-b border-gray-100 hover:bg-gray-50'
+                    className='text-black-200 cursor-pointer border-b border-gray-100 hover:bg-gray-50 [&>td:first-child]:pl-1.5'
                     onClick={() => router.push(`/workspace/${workspaceId}/${receipt.id}`)}
                   >
+                    {isAdmin && (
+                      <td
+                        className='py-3.5'
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleToggleReceipt(receipt.id);
+                        }}
+                      >
+                        {selectedReceiptIds.has(receipt.id) ? (
+                          <Icon name='checkboxActive' size={18} className='overflow-visible' />
+                        ) : (
+                          <Icon name='checkboxDefault' size={18} className='overflow-visible' />
+                        )}
+                      </td>
+                    )}
                     <td className='truncate py-3.5 pr-4'>{receipt.userName}</td>
                     <td className='truncate py-3.5 pr-4'>{receipt.storeName}</td>
                     <td className='py-3.5 pr-4'>₩{receipt.totalAmount.toLocaleString()}</td>
@@ -257,11 +388,26 @@ export default function Page() {
               <div
                 key={receipt.id}
                 className={cn(
-                  'flex cursor-pointer items-start gap-3 py-3.5',
+                  'flex cursor-pointer items-start gap-3 px-2 py-3.5 hover:bg-gray-50',
                   idx !== receipts.length - 1 && 'border-b border-gray-100',
                 )}
                 onClick={() => router.push(`/workspace/${workspaceId}/${receipt.id}`)}
               >
+                {isAdmin && (
+                  <div
+                    className='flex shrink-0 items-center pt-0.5'
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleToggleReceipt(receipt.id);
+                    }}
+                  >
+                    {selectedReceiptIds.has(receipt.id) ? (
+                      <Icon name='checkboxActive' size={16} className='overflow-visible' />
+                    ) : (
+                      <Icon name='checkboxDefault' size={16} className='overflow-visible' />
+                    )}
+                  </div>
+                )}
                 <div className='flex flex-1 flex-col gap-1'>
                   <div className='flex items-center justify-between'>
                     <span className='text-black-200 text-md font-medium'>{receipt.storeName}</span>
