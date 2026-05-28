@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { toast } from 'react-toastify';
 import { useParams, useRouter } from 'next/navigation';
 import {
@@ -45,19 +45,20 @@ export default function Page() {
   const pageSize = isMobile ? 5 : 6;
 
   const storageKey = `workspace_page_${workspaceId}`;
-  const [page, setPageState] = useState(() => {
+  const [page, setPage] = useState(() => {
     if (typeof window === 'undefined') return 0;
     const saved = sessionStorage.getItem(storageKey);
-    return saved !== null ? Number(saved) : 0;
+    if (saved !== null) {
+      sessionStorage.removeItem(storageKey);
+      return Number(saved);
+    }
+    return 0;
   });
 
-  const setPage = useCallback(
-    (newPage: number) => {
-      setPageState(newPage);
-      sessionStorage.setItem(storageKey, String(newPage));
-    },
-    [storageKey],
-  );
+  const goToReceiptDetail = (receiptId: number) => {
+    sessionStorage.setItem(storageKey, String(page));
+    router.push(`/workspace/${workspaceId}/${receiptId}`);
+  };
 
   const [storeName, setStoreName] = useState('');
   const [selectedMemberName, setSelectedMemberName] = useState<string | null>(null);
@@ -96,11 +97,6 @@ export default function Page() {
       : undefined;
 
   const { data: statsData, isError: isStatsError } = useGetReceiptStats(workspaceId);
-
-  useEffect(() => {
-    const saved = sessionStorage.getItem(storageKey);
-    setPageState(saved !== null ? Number(saved) : 0);
-  }, [storageKey]);
 
   const listParams = {
     workspaceId,
@@ -349,7 +345,7 @@ export default function Page() {
                   <tr
                     key={receipt.id}
                     className='text-black-200 cursor-pointer border-b border-gray-100 hover:bg-gray-50 [&>td:first-child]:pl-1.5'
-                    onClick={() => router.push(`/workspace/${workspaceId}/${receipt.id}`)}
+                    onClick={() => goToReceiptDetail(receipt.id)}
                   >
                     {isAdmin && (
                       <td
@@ -391,7 +387,7 @@ export default function Page() {
                   'flex cursor-pointer items-start gap-3 px-2 py-3.5 hover:bg-gray-50',
                   idx !== receipts.length - 1 && 'border-b border-gray-100',
                 )}
-                onClick={() => router.push(`/workspace/${workspaceId}/${receipt.id}`)}
+                onClick={() => goToReceiptDetail(receipt.id)}
               >
                 {isAdmin && (
                   <div
@@ -402,9 +398,9 @@ export default function Page() {
                     }}
                   >
                     {selectedReceiptIds.has(receipt.id) ? (
-                      <Icon name='checkboxActive' size={16} className='overflow-visible' />
+                      <Icon name='checkboxActive' size={16} className='mt-0.75 overflow-visible' />
                     ) : (
-                      <Icon name='checkboxDefault' size={16} className='overflow-visible' />
+                      <Icon name='checkboxDefault' size={16} className='mt-0.75 overflow-visible' />
                     )}
                   </div>
                 )}
