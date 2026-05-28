@@ -20,13 +20,14 @@ export const iconPaths = {
   checkboxActive: (
     <>
       <rect x='0.5' y='0.5' width='23' height='23' rx='3.5' fill='#E8EEF7' />
-      <rect x='0.5' y='0.5' width='23' height='23' rx='3.5' stroke='#D9D9D9' />
+      <rect x='0.5' y='0.5' width='23' height='23' rx='3.5' stroke='#D9D9D9' fill='none' />
       <path
         d='M7 12L11 16L17 8'
         stroke='#1251AA'
         strokeWidth='2'
         strokeLinecap='round'
         strokeLinejoin='round'
+        fill='none'
       />
     </>
   ),
