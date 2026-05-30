@@ -387,14 +387,12 @@ export default function FeatureSection() {
             </h2>
             <p className='max-w-125 text-[16px] leading-[1.7] text-[#475569] md:text-[17px]'>
               AI가 이상 지출을 선별해 관리자 앞에 먼저 가져다 놓습니다. 의심 항목은 칩으로 강조
-              표시되어 놓치지 않고, 반려 사유를 남겨 팀원에게 명확한 피드백까지. 영수증 목록은 CSV로
-              한 번에 다운로드.
+              표시되어 놓치지 않으며, 반려 사유를 남겨 팀원에게 명확한 피드백을 전달합니다.
             </p>
             <ul className='mt-6 flex flex-col gap-2.5'>
               <CheckItem>대기·승인·반려 상태를 한눈에</CheckItem>
               <CheckItem>의심 패턴 칩으로 실수 없는 승인·반려</CheckItem>
               <CheckItem>반려 사유 작성으로 팀원에게 명확한 피드백</CheckItem>
-              <CheckItem>영수증 목록 CSV 다운로드</CheckItem>
             </ul>
           </div>
 
