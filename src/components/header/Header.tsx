@@ -103,7 +103,7 @@ function WorkspaceDetailHeader() {
           <>
             <div className='flex w-35 items-center gap-1.5 truncate md:w-50 md:gap-2 lg:w-75'>
               <button
-                className='text-black-200 truncate text-lg font-bold md:text-xl'
+                className='text-black-200 cursor-pointer truncate text-lg font-bold md:text-xl'
                 onClick={() => router.push(`/workspace/${workspaceId}`)}
               >
                 {workspace?.workspaceName ?? ''}
