@@ -36,6 +36,25 @@ function FaqItem({ q, a }: FaqItemProps) {
 
 const FAQS: FaqItemProps[] = [
   {
+    q: 'Re:Mate는 무슨 뜻인가요?',
+    a: (
+      <>
+        Re:Mate는 두 가지 의미를 담고 있습니다.
+        <br />
+        <br />
+        <strong>Re:</strong>는 이메일에서 &apos;답장·검토(Review)&apos;를 뜻하는 접두어로, 영수증을
+        AI가 먼저 읽고 분석한 뒤 관리자가 승인·반려로 &apos;응답&apos;하는 워크플로우를 상징합니다.
+        <br />
+        <br />
+        <strong>Mate</strong>는 &apos;동료·파트너&apos;를 의미합니다. 팀의 지출을 함께 관리하는
+        동반자로서, 멤버와 관리자가 하나의 워크스페이스 안에서 투명하게 협력한다는 뜻을 담았습니다.
+        <br />
+        <br />
+        즉, Re:Mate는 &apos;팀 지출을 함께 검토하는 동료&apos;라는 철학을 이름에 녹인 서비스입니다.
+      </>
+    ),
+  },
+  {
     q: 'AI가 부적절 결제를 어떻게 탐지하나요?',
     a: (
       <>
