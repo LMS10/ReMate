@@ -45,20 +45,39 @@ function LandingHeader() {
           className='hidden pt-1 md:block'
         />
       </Link>
-      {isLoading ? (
-        <HeaderSkeleton />
-      ) : user ? (
-        <HeaderUserProfile key={pathname} name={user.name} picture={user.picture} />
-      ) : (
-        <div className='text-md flex items-center gap-4 text-gray-500 md:gap-8 md:text-lg'>
-          <Link href='/login' className='hover:text-black-200 transition-all duration-200'>
-            로그인
-          </Link>
-          <Link href='/signup' className='hover:text-black-200 transition-all duration-200'>
-            회원가입
-          </Link>
-        </div>
-      )}
+
+      <div className='text-md flex items-center text-gray-500 md:text-lg'>
+        <Link
+          href='/about'
+          className={cn(
+            'hover:text-black-200 transition-all duration-200',
+            pathname === '/about' && 'text-black-200 font-semibold',
+          )}
+        >
+          서비스 소개
+        </Link>
+
+        <div className='mx-3 h-5.5 w-px bg-gray-300 md:mx-4 md:h-7' />
+
+        {isLoading ? (
+          <HeaderSkeleton />
+        ) : user ? (
+          <HeaderUserProfile key={pathname} name={user.name} picture={user.picture} />
+        ) : (
+          <div className='flex items-center gap-4 md:gap-8'>
+            <Link
+              href='/login'
+              className='hover:text-black-200 transition-all duration-200 md:ml-4'
+            >
+              로그인
+            </Link>
+
+            <Link href='/signup' className='hover:text-black-200 transition-all duration-200'>
+              회원가입
+            </Link>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
@@ -84,7 +103,7 @@ function WorkspaceDetailHeader() {
           <>
             <div className='flex w-35 items-center gap-1.5 truncate md:w-50 md:gap-2 lg:w-75'>
               <button
-                className='text-black-200 truncate text-lg font-bold md:text-xl'
+                className='text-black-200 cursor-pointer truncate text-lg font-bold md:text-xl'
                 onClick={() => router.push(`/workspace/${workspaceId}`)}
               >
                 {workspace?.workspaceName ?? ''}
@@ -153,7 +172,7 @@ export default function Header() {
   const workspaceId = useWorkspaceId();
 
   const isLoggedIn = status === 'authenticated';
-  const isLanding = pathname === '/';
+  const isLanding = pathname === '/' || pathname === '/about';
 
   const renderContent = () => {
     if (isLanding) return <LandingHeader />;
