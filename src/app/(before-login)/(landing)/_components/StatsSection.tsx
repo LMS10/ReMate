@@ -4,11 +4,11 @@ const STATS = [
   {
     big: (
       <>
-        {'100'}
+        {'98'}
         <em className='text-[#2563EB] not-italic'>%</em>
       </>
     ),
-    small: '정확도',
+    small: '부적절 지출 탐지 정확도',
   },
   { big: <em className='text-[#2563EB] not-italic'>∞</em>, small: '워크스페이스 제한 없음' },
   {
